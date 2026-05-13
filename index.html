@@ -183,12 +183,14 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   display: flex; gap: 28px;
   font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
 }
-.topnav-center a { position: relative; padding: 4px 0; transition: opacity var(--transition); }
-.topnav-center a::after {
-  content: ""; position: absolute; left: 0; right: 100%; bottom: 0;
-  height: 1px; background: currentColor; transition: right var(--transition);
+.topnav-center a {
+  position: relative; padding: 4px 0;
+  transition: color 220ms ease;
 }
-.topnav-center a:hover::after { right: 0; }
+.topnav-center a:hover { color: var(--accent); }
+/* On the vermillion contact section, the topnav inverts to ink — keep
+   hover legible by tinting toward a darker ink instead of the same orange */
+.topnav.on-accent .topnav-center a:hover { color: var(--accent-ink); opacity: 0.7; }
 
 .topnav-right { display: flex; align-items: center; gap: 18px; }
 .theme-toggle {
@@ -406,17 +408,38 @@ section {
 .intro-text .space { white-space: pre; }
 .intro-text .punc { display: inline-block; }
 
-/* Subtle underline draw on word hover */
-.intro-text .word::after {
-  content: ""; position: absolute; left: 0; right: 100%; bottom: -0.08em;
-  height: 1px; background: var(--muted);
-  transition: right 400ms cubic-bezier(0.7, 0, 0.2, 1); opacity: 0.5;
+/* Word hover: weight bumps from 450 -> 700, color picks up the accent.
+   Pre-allocate the bold width via a ::before ghost so the line never reflows. */
+.intro-text .word {
+  transition: color 220ms ease;
 }
-.intro-text .word:hover::after { right: 0; }
+.intro-text .word .orig {
+  display: inline-block;
+  font-weight: 450;
+  transition: font-weight 280ms cubic-bezier(0.4, 0, 0.2, 1),
+              font-variation-settings 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.intro-text .word::before {
+  /* Invisible ghost reserves the bold width so hover doesn't jitter neighbouring words */
+  content: attr(data-ghost);
+  display: inline-block; width: 0;
+  visibility: hidden; pointer-events: none;
+  font-weight: 700;
+}
+.intro-text .word:hover { color: var(--accent); }
+.intro-text .word:hover .orig {
+  font-weight: 700;
+  font-variation-settings: "wght" 700;
+}
 
-/* The one "bridging" word swaps to serif italic on hover */
+/* The one "bridging" word still swaps to serif italic on hover — keep that
+   personality moment, but skip the bold (the swap is its own treatment). */
 .intro-text .word.serif .orig {
-  display: inline-block; transition: opacity 280ms ease, transform 280ms ease;
+  display: inline-block; transition: opacity 280ms ease, transform 280ms ease, font-weight 280ms ease;
+}
+.intro-text .word.serif:hover .orig {
+  opacity: 0; transform: translateY(-6px);
+  font-weight: 450; /* don't double-up animations */
 }
 .intro-text .word.serif .alt {
   position: absolute; left: 0; top: 0;
@@ -426,9 +449,7 @@ section {
   transition: opacity 280ms ease, transform 280ms ease;
   white-space: nowrap; pointer-events: none; font-size: 1.08em;
 }
-.intro-text .word.serif:hover .orig { opacity: 0; transform: translateY(-6px); }
 .intro-text .word.serif:hover .alt { opacity: 1; transform: translateY(0); }
-.intro-text .word.serif::after { background: var(--accent); opacity: 1; }
 
 .intro-text .ch {
   display: inline-block;
@@ -1397,13 +1418,13 @@ function Hero({ animation = "wave" }) {
           if (tok.m === "p") return <span key={i} className="punc">{splitChars(tok.t)}</span>;
           const spec = SPECIAL[tok.t.toLowerCase()];
           if (spec) return (
-            <span key={i} className={`word ${spec.kind}`} data-special={spec.kind}>
+            <span key={i} className={`word ${spec.kind}`} data-special={spec.kind} data-ghost={tok.t}>
               <span className="orig">{splitChars(tok.t)}</span>
               {spec.alt && <span className="alt" aria-hidden="true">{spec.alt}</span>}
             </span>
           );
           return (
-            <span key={i} className="word">
+            <span key={i} className="word" data-ghost={tok.t}>
               <span className="orig">{splitChars(tok.t)}</span>
             </span>
           );
@@ -1567,11 +1588,6 @@ function Work() {
             </div>
           </a>
         ))}
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 40, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--muted)" }}>
-        <span>// Index of full case studies on request</span>
-        <a href="#contact" style={{ borderBottom: "1px solid currentColor", paddingBottom: 2 }}>Request the full deck →</a>
       </div>
     </section>
   );
