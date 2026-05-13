@@ -85,9 +85,9 @@ html, body {
 
 /* Mono for "system" voice — labels, meta, eyebrows, numbers, section markers */
 .mono, .eyebrow, .label,
-.hero-eyebrow, .hero-footer, .scroll-cue,
+.hero-eyebrow, .hero-footer,
 .section-head .num, .section-head h2, .section-head .meta,
-.case-num, .case .case-meta .tags, .case .placeholder-tag,
+.case-num, .case .case-meta .tags,
 .collage-card .meta, .collage-controls, .topnav-center, .cta,
 .footer .col .hd, .footer-bottom, .menu-foot,
 .contact-card .row .k, .bubble {
@@ -408,54 +408,60 @@ section {
 .intro-text .space { white-space: pre; }
 .intro-text .punc { display: inline-block; }
 
-/* Word hover: weight bumps from 450 -> 700, color picks up the accent.
-   Pre-allocate the bold width via a ::before ghost so the line never reflows. */
-.intro-text .word {
-  transition: color 220ms ease;
-}
-.intro-text .word .orig {
-  display: inline-block;
-  font-weight: 450;
-  transition: font-weight 280ms cubic-bezier(0.4, 0, 0.2, 1),
-              font-variation-settings 280ms cubic-bezier(0.4, 0, 0.2, 1);
-}
+/* Hero word hover — cascading bold.
+   Each character animates from weight 450 -> 700 with a left-to-right
+   stagger driven by the CSS custom property --ch-i (set per <span class="ch">
+   in JSX). No color change — the weight shift itself is the affordance.
+   A hidden ::before "ghost" pre-allocates the bold width so neighbouring
+   words don't reflow mid-cascade. */
+.intro-text .word { position: relative; }
+.intro-text .word .orig { display: inline-block; }
 .intro-text .word::before {
-  /* Invisible ghost reserves the bold width so hover doesn't jitter neighbouring words */
   content: attr(data-ghost);
   display: inline-block; width: 0;
   visibility: hidden; pointer-events: none;
-  font-weight: 700;
+  font-weight: 700; font-variation-settings: "wght" 700;
+  letter-spacing: -0.04em; /* match hover tracking so reservation is exact */
 }
-.intro-text .word:hover { color: var(--accent); }
-.intro-text .word:hover .orig {
+.intro-text .ch {
+  display: inline-block;
+  font-weight: 450; font-variation-settings: "wght" 450;
+  transition:
+    font-weight 320ms cubic-bezier(0.4, 0, 0.2, 1),
+    font-variation-settings 320ms cubic-bezier(0.4, 0, 0.2, 1),
+    letter-spacing 320ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: 0ms; /* reset on mouse-leave so unbold snaps uniformly */
+  will-change: font-variation-settings, transform;
+}
+.intro-text .word:hover .ch {
   font-weight: 700;
   font-variation-settings: "wght" 700;
+  letter-spacing: -0.04em;
+  /* Left-to-right stagger — 28ms per character */
+  transition-delay: calc(var(--ch-i, 0) * 28ms);
 }
 
-/* The one "bridging" word still swaps to serif italic on hover — keep that
-   personality moment, but skip the bold (the swap is its own treatment). */
+/* The "bridging" word keeps its serif-italic swap — skip the bold cascade
+   inside it to avoid double-animating during the cross-fade. */
 .intro-text .word.serif .orig {
-  display: inline-block; transition: opacity 280ms ease, transform 280ms ease, font-weight 280ms ease;
+  display: inline-block;
+  transition: opacity 320ms ease, transform 320ms ease;
 }
-.intro-text .word.serif:hover .orig {
-  opacity: 0; transform: translateY(-6px);
-  font-weight: 450; /* don't double-up animations */
+.intro-text .word.serif:hover .orig { opacity: 0; transform: translateY(-6px); }
+.intro-text .word.serif:hover .ch {
+  font-weight: 450; font-variation-settings: "wght" 450; letter-spacing: -0.03em;
+  transition-delay: 0ms;
 }
 .intro-text .word.serif .alt {
   position: absolute; left: 0; top: 0;
   font-family: var(--font-display); font-style: italic;
   font-weight: 400; letter-spacing: -0.01em;
   color: var(--accent); opacity: 0; transform: translateY(6px);
-  transition: opacity 280ms ease, transform 280ms ease;
+  transition: opacity 320ms ease, transform 320ms ease;
   white-space: nowrap; pointer-events: none; font-size: 1.08em;
 }
 .intro-text .word.serif:hover .alt { opacity: 1; transform: translateY(0); }
-
-.intro-text .ch {
-  display: inline-block;
-  transition: transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1);
-  will-change: transform;
-}
 
 .intro-text .period {
   display: inline-block; width: 0.34em; height: 0.34em; background: var(--accent);
@@ -482,10 +488,9 @@ section {
   padding-top: clamp(32px, 5vh, 56px);
   margin-top: clamp(48px, 8vh, 96px);
   border-top: 1px solid var(--line);
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
   font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
 }
-.hero-footer .col-now .v { text-transform: none; font-style: italic; font-family: var(--font-display); font-size: 16px; letter-spacing: -0.005em; color: var(--accent); }
 .hero-eyebrow .clock-time { color: var(--accent); font-variant-numeric: tabular-nums; }
 .hero-footer .col { display: flex; flex-direction: column; gap: 6px; }
 .hero-footer .col .k { color: var(--muted); font-size: 10px; letter-spacing: 0.14em; }
@@ -496,20 +501,6 @@ section {
   display: inline-block; width: 6px; height: 6px;
   background: var(--accent); border-radius: 50%;
   animation: pulse 2.4s infinite; vertical-align: middle; margin-right: 4px;
-}
-
-.scroll-cue {
-  position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
-  font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--muted); display: flex; align-items: center; gap: 10px;
-  animation: cue-float 3s ease-in-out infinite;
-}
-@keyframes cue-float {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50%       { transform: translateX(-50%) translateY(-5px); }
-}
-.scroll-cue::before, .scroll-cue::after {
-  content: ""; width: 24px; height: 1px; background: currentColor;
 }
 
 /* ============================================================
@@ -574,36 +565,40 @@ section {
 .case .case-sub { font-family: var(--font-sans); font-size: 14px; color: var(--muted); max-width: 42ch; line-height: 1.55; }
 .case .case-thumb {
   position: relative; aspect-ratio: 16 / 10;
-  background: var(--line); overflow: hidden; display: grid; place-items: center;
+  background: var(--bg-2); overflow: hidden; display: grid; place-items: center;
   transition: transform 620ms cubic-bezier(0.2, 0.7, 0.2, 1), filter 420ms ease;
   transform-origin: center;
 }
-.case .case-thumb::before {
+.case .case-thumb img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; display: block;
+  transition: transform 800ms cubic-bezier(0.2, 0.7, 0.2, 1), filter 420ms ease;
+}
+/* Stripe pattern — only when there's no cover image */
+.case .case-thumb:not(.has-image)::before {
   content: ""; position: absolute; inset: 0;
   background-image: repeating-linear-gradient(45deg, transparent 0 8px, rgba(0,0,0,0.04) 8px 9px);
-  transition: opacity 420ms ease, background-image 420ms ease;
+  transition: opacity 420ms ease;
 }
-/* Accent veil that fades in over the thumb on hover */
+/* Accent veil — over the image on hover */
 .case .case-thumb::after {
   content: ""; position: absolute; inset: 0;
   background: linear-gradient(135deg,
-    color-mix(in oklab, var(--accent) 28%, transparent) 0%,
+    color-mix(in oklab, var(--accent) 26%, transparent) 0%,
     transparent 70%);
   opacity: 0; transition: opacity 520ms ease;
   mix-blend-mode: multiply;
+  pointer-events: none;
 }
-.case:hover .case-thumb { transform: scale(1.018); filter: contrast(1.05); }
-.case:hover .case-thumb::before { opacity: 0.45; }
+.case:hover .case-thumb { filter: contrast(1.04); }
+.case:hover .case-thumb img { transform: scale(1.045); }
 .case:hover .case-thumb::after { opacity: 1; }
-[data-theme="dark"] .case .case-thumb::before {
+[data-theme="dark"] .case .case-thumb:not(.has-image)::before {
   background-image: repeating-linear-gradient(45deg, transparent 0 8px, rgba(255,255,255,0.06) 8px 9px);
 }
-.case .case-thumb .placeholder-tag {
-  position: relative; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
-  color: var(--muted); background: var(--bg); padding: 4px 8px; border: 1px solid var(--line);
-}
 .case .case-thumb .corner {
-  position: absolute; width: 10px; height: 10px; border: 1px solid var(--line-strong);
+  position: absolute; width: 10px; height: 10px; border: 1px solid rgba(255,255,255,0.55);
+  z-index: 2; mix-blend-mode: difference;
 }
 .case .case-thumb .corner.tl { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
 .case .case-thumb .corner.tr { top: 8px; right: 8px; border-left: 0; border-bottom: 0; }
@@ -634,8 +629,26 @@ section {
 .case:hover .case-num { color: var(--accent); transform: translateX(-2px); }
 
 /* ============================================================
-   COLLAGE — HORIZONTAL STRIP
+   COLLAGE — two views: horizontal strip (default) + 3-column grid
    ============================================================ */
+/* View toggle — small segmented control in the section head */
+.collage-view-toggle {
+  display: inline-flex; gap: 0;
+  border: 1px solid var(--line);
+  padding: 3px;
+}
+.collage-view-toggle button {
+  width: 32px; height: 28px; display: grid; place-items: center;
+  color: var(--muted);
+  transition: background 220ms ease, color 220ms ease;
+}
+.collage-view-toggle button[aria-pressed="true"] {
+  background: var(--fg); color: var(--bg);
+}
+.collage-view-toggle button:not([aria-pressed="true"]):hover { color: var(--fg); }
+.collage-view-toggle svg { width: 14px; height: 14px; }
+
+/* --- Horizontal strip --- */
 .collage-wrap { position: relative; margin: 0 calc(var(--pad-x) * -1); padding: 0 0 0 var(--pad-x); }
 .collage-track {
   display: flex; gap: 20px; padding-right: var(--pad-x);
@@ -644,26 +657,80 @@ section {
 }
 .collage-track.dragging { cursor: grabbing; scroll-snap-type: none; }
 .collage-track::-webkit-scrollbar { display: none; }
+
+/* --- Grid view --- */
+.collage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(16px, 2vw, 28px);
+}
+.collage-grid .collage-card {
+  width: auto !important;
+  height: auto !important;
+  aspect-ratio: 4 / 5;
+}
+
+/* Shared card styles */
 .collage-card {
   flex: 0 0 auto; scroll-snap-align: start; position: relative;
-  background: var(--line); border: 1px solid var(--line);
+  background: var(--bg); border: 1px solid var(--line);
   display: flex; flex-direction: column;
-  transition: transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 600ms ease;
+  overflow: hidden;
+  transition: transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1),
+              opacity 600ms ease, border-color 320ms ease;
   opacity: 0; transform: translateY(40px);
 }
 .collage-card.in { opacity: 1; transform: translateY(0); }
 .collage-card .thumb {
-  flex: 1; position: relative; overflow: hidden; background: var(--bg);
+  flex: 1; position: relative; overflow: hidden; background: var(--bg-2);
   display: grid; place-items: center;
 }
-.collage-card .thumb svg { width: 100%; height: 100%; display: block; }
+.collage-card .thumb svg,
+.collage-card .thumb img {
+  width: 100%; height: 100%; display: block; object-fit: cover;
+  transition: transform 800ms cubic-bezier(0.2, 0.7, 0.2, 1), filter 420ms ease;
+}
+/* Hover animation — image lifts and contrast bumps; reveal panel slides up */
+.collage-card .reveal {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: clamp(14px, 2vw, 22px);
+  background: var(--fg); color: var(--bg);
+  transform: translateY(101%);
+  transition: transform 520ms cubic-bezier(0.65, 0, 0.35, 1);
+  display: flex; flex-direction: column; gap: 6px;
+  pointer-events: none;
+}
+.collage-card .reveal .reveal-name {
+  font-family: var(--font-sans);
+  font-size: clamp(14px, 1.2vw, 18px); font-weight: 500;
+  letter-spacing: -0.015em; line-height: 1.2;
+}
+.collage-card .reveal .reveal-cat {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+  opacity: 0.6;
+}
+.collage-card .reveal .reveal-arrow {
+  position: absolute; right: clamp(14px, 2vw, 22px); top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent);
+  font-size: 18px;
+}
+.collage-card:hover { border-color: var(--fg); }
+.collage-card:hover .thumb img,
+.collage-card:hover .thumb svg { transform: scale(1.05); filter: contrast(1.06); }
+.collage-card:hover .reveal { transform: translateY(0); }
+
+/* Default meta row (visible when reveal isn't shown — minimal & quiet) */
 .collage-card .meta {
   padding: 12px 14px; display: flex; justify-content: space-between; align-items: baseline;
   font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
   border-top: 1px solid var(--line); background: var(--bg);
+  transition: opacity 320ms ease;
 }
-.collage-card .meta .name { font-weight: 500; }
-.collage-card .meta .yr { color: var(--muted); }
+.collage-card .meta .name { font-weight: 500; font-family: var(--font-mono); }
+.collage-card .meta .yr { color: var(--muted); font-family: var(--font-mono); }
+
 .collage-controls {
   display: flex; justify-content: space-between; align-items: center;
   margin-top: 28px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
@@ -891,6 +958,99 @@ section {
 .bubble.from-left::before { left: -4px; top: 18px; }
 
 /* ============================================================
+   FLOATING CURSOR — pursuit ring + small dot
+   ============================================================ */
+/* Only render on devices with precise hover — phones/tablets use the OS cursor */
+@media (hover: hover) and (pointer: fine) {
+  /* Hide native cursor on interactive elements so the floating one is the only signal.
+     Keep native for text inputs (caret matters there). */
+  html, body { cursor: none; }
+  a, button, [role="button"], .case, .collage-card, .rail-item, .hamburger,
+  .theme-toggle, .cta, .topnav-center a, .submit, .method-tile, summary, label {
+    cursor: none;
+  }
+  textarea, input[type="text"], input[type="email"], input[type="tel"],
+  input[type="search"], [contenteditable="true"] {
+    cursor: text; /* native I-beam for text — floating cursor matches it */
+  }
+}
+
+.fcursor-ring,
+.fcursor-dot {
+  position: fixed; left: 0; top: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  will-change: transform, width, height, background;
+}
+.fcursor-ring {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1.5px solid var(--fg);
+  background: transparent;
+  transition:
+    width 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    height 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-radius 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 220ms ease,
+    background 220ms ease,
+    opacity 220ms ease;
+  mix-blend-mode: difference; /* keeps the ring readable over any bg */
+  border-color: rgba(255,255,255,0.85);
+}
+.fcursor-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent);
+  transition:
+    width 200ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    height 200ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    background 220ms ease,
+    opacity 220ms ease;
+}
+
+/* Over a link / button → ring grows and fills */
+.fcursor-ring[data-kind="link"] {
+  width: 56px; height: 56px;
+  border-color: rgba(255,255,255,0.95);
+  background: rgba(255,255,255,0.06);
+}
+.fcursor-dot[data-kind="link"] {
+  width: 8px; height: 8px; background: var(--accent);
+}
+
+/* Over the orange contact section → cursor tints to ink for contrast */
+.fcursor-ring[data-kind="accent"],
+.fcursor-ring[data-kind="accent-link"] {
+  mix-blend-mode: normal;
+  border-color: var(--accent-ink);
+}
+.fcursor-ring[data-kind="accent-link"] {
+  width: 56px; height: 56px;
+  background: rgba(15,10,7,0.08);
+}
+.fcursor-dot[data-kind="accent"],
+.fcursor-dot[data-kind="accent-link"] {
+  background: var(--accent-ink);
+}
+
+/* Text input → hide the floating cursor entirely; native I-beam is the truth */
+.fcursor-ring[data-kind="text"],
+.fcursor-dot[data-kind="text"] {
+  opacity: 0 !important;
+}
+
+/* Pressed state — small inward pinch */
+.fcursor-ring[data-pressed="true"] {
+  width: 22px; height: 22px;
+}
+.fcursor-ring[data-kind="link"][data-pressed="true"] {
+  width: 44px; height: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fcursor-ring, .fcursor-dot { transition: none; }
+}
+
+/* ============================================================
    TWEAKS PANEL
    ============================================================ */
 .tweaks-host { font-family: var(--font-mono); }
@@ -917,14 +1077,17 @@ section:not(#hero).revealed .section-head {
   /* Reserve room for the fixed hamburger so the theme-toggle doesn't sit on top of it */
   .topnav-right { margin-right: 52px; }
   .hero-footer { grid-template-columns: 1fr 1fr; }
-  .hero-footer .col-now { grid-column: 1 / -1; }
   .case { grid-template-columns: 1fr; gap: 16px; }
   .case .case-num { padding-top: 0; }
   .case .open-arrow { display: none; }
   .contact-methods { grid-template-columns: 1fr; }
   .contact-note { grid-template-columns: 1fr; gap: 16px; }
   .contact-note .submit { justify-self: start; }
+  .collage-grid { grid-template-columns: 1fr 1fr; }
   .footer { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .collage-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   /* Tighter, balanced header on phones */
@@ -1372,7 +1535,11 @@ function tokenize(s) {
 }
 
 function splitChars(s) {
-  return s.split("").map((c, i) => <span key={i} className="ch">{c}</span>);
+  // Per-character index is exposed via CSS custom property so the hover
+  // cascade can stagger transition-delay without hard-coding nth-child rules.
+  return s.split("").map((c, i) => (
+    <span key={i} className="ch" style={{ "--ch-i": i }}>{c}</span>
+  ));
 }
 
 function Hero({ animation = "wave" }) {
@@ -1457,21 +1624,12 @@ function Hero({ animation = "wave" }) {
             Open · Q3 '26
           </span>
         </div>
-        <div className="col col-now">
-          <span className="k">Now</span>
-          <span className="v">{clock.now}</span>
-        </div>
-      </div>
-
-      <div className="scroll-cue" aria-hidden="true">
-        <span>Three projects below</span>
       </div>
     </section>
   );
 }
 
-/* Live Bangalore clock + time-aware greeting + "Now" snippet.
-   Pure function so it can run during SSR/initial render without side-effects. */
+/* Live Bangalore clock + time-aware greeting for the hero eyebrow */
 function bangaloreClock() {
   const now = new Date();
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
@@ -1487,16 +1645,7 @@ function bangaloreClock() {
   else if (h >= 17 && h < 21) greeting = "Good evening";
   else greeting = "Burning the midnight oil";
 
-  let nowLine;
-  if (h >= 5 && h < 9) nowLine = "On the first coffee";
-  else if (h >= 9 && h < 12) nowLine = "Deep in mock-ups";
-  else if (h >= 12 && h < 14) nowLine = "On lunch break";
-  else if (h >= 14 && h < 18) nowLine = "In review mode";
-  else if (h >= 18 && h < 21) nowLine = "Wrapping up";
-  else if (h >= 21 || h < 1) nowLine = "Wandering Figma";
-  else nowLine = "Sleeping, probably";
-
-  return { time: `${hh}:${m} ${ampm}`, greeting, now: nowLine };
+  return { time: `${hh}:${m} ${ampm}`, greeting };
 }
 
 Object.assign(window, { Hero });
@@ -1505,6 +1654,12 @@ Object.assign(window, { Hero });
 <!-- ── Work ──────────────────────────────────────────────────── -->
 <script type="text/babel">
 const { useRef: useRefWork, useEffect: useEffectWork } = React;
+
+/* Image URLs use Unsplash's stable CDN with photo IDs.
+   Width/quality params keep them lean; auto=format serves AVIF/WebP where supported.
+   If a photo ever 404s, the <img onError> handler in the JSX swaps to the SVG fallback. */
+const UN = (id, w = 1600) =>
+  `https://images.unsplash.com/photo-${id}?w=${w}&q=80&auto=format&fit=crop`;
 
 const CASE_STUDIES = [
   {
@@ -1515,6 +1670,8 @@ const CASE_STUDIES = [
     sub: "A dating product built around sensory load, communication style and consent — not just swipes. Research-led, made with the people it's for.",
     tags: ["Consumer", "Research-led", "Inclusive", "iOS"],
     year: "2025", duration: "6 months",
+    /* Soft warm scene — intimate, calm, paper-and-light feel */
+    cover: UN("1516589178581-6cd7833ae3b2"),
   },
   {
     id: "cs-02", num: "C/02",
@@ -1524,6 +1681,8 @@ const CASE_STUDIES = [
     sub: "Re-routing how a 12M-person city chooses between transit, ride-share and personal mobility. A platform problem dressed up as a UI.",
     tags: ["GovTech", "Service design", "Strategy", "Multi-modal"],
     year: "2024", duration: "9 months",
+    /* Long-exposure city traffic — movement, scale, multimodal */
+    cover: UN("1503376780353-7e6692767b70"),
   },
   {
     id: "cs-03", num: "C/03",
@@ -1533,6 +1692,8 @@ const CASE_STUDIES = [
     sub: "An internal tool that trimmed 22% off prep-to-plate. A masterclass in designing for people who really don't want to be designed for.",
     tags: ["B2B", "Operations", "Design system", "Web"],
     year: "2023", duration: "12 months",
+    /* Professional kitchen — operations, hands, craft */
+    cover: UN("1556909114-44e3e9395a30"),
   },
 ];
 
@@ -1574,12 +1735,23 @@ function Work() {
                 {c.tags.map((t) => <span key={t} className="tag">{t}</span>)}
               </div>
             </div>
-            <div className="case-thumb">
+            <div className={`case-thumb${c.cover ? " has-image" : ""}`}>
+              {c.cover && (
+                <img
+                  src={c.cover}
+                  alt={c.title}
+                  loading="lazy"
+                  onError={(e) => {
+                    // Cover failed to load — drop it and let the placeholder stripe show
+                    e.currentTarget.style.display = "none";
+                    e.currentTarget.parentElement.classList.remove("has-image");
+                  }}
+                />
+              )}
               <span className="corner tl"></span>
               <span className="corner tr"></span>
               <span className="corner bl"></span>
               <span className="corner br"></span>
-              <span className="placeholder-tag">CASE STUDY {String(i + 1).padStart(2, "0")} · DROP IN COVER IMG</span>
             </div>
             <div className="open-arrow" aria-hidden="true">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -1600,19 +1772,37 @@ Object.assign(window, { Work });
 <script type="text/babel">
 const { useRef: useRefCol, useEffect: useEffectCol, useState: useStateCol } = React;
 
+const UN_C = (id, w = 800) =>
+  `https://images.unsplash.com/photo-${id}?w=${w}&q=80&auto=format&fit=crop`;
+
+/* Each entry maps to a real Unsplash photo whose mood matches the project's
+   discipline (Identity / Poster / Wayfinding / Editorial / Type / etc.).
+   The img URLs are the primary; the SVG `swatch` is the onError fallback. */
 const COLLAGE = [
-  { id: "b1",  name: "Kintsugi Studios",  cat: "Identity",    year: "25", w: 420, h: 540, swatch: "art-1" },
-  { id: "b2",  name: "Halt & Heat",       cat: "Poster",      year: "25", w: 320, h: 460, swatch: "art-2" },
-  { id: "b3",  name: "Open Routes",       cat: "Wayfinding",  year: "24", w: 540, h: 460, swatch: "art-3" },
-  { id: "b4",  name: "Folio No. 04",      cat: "Editorial",   year: "24", w: 360, h: 460, swatch: "art-4" },
-  { id: "b5",  name: "Field Recordings",  cat: "Identity",    year: "24", w: 420, h: 540, swatch: "art-5" },
-  { id: "b6",  name: "MNML / 03",         cat: "Poster",      year: "23", w: 320, h: 460, swatch: "art-6" },
-  { id: "b7",  name: "Loop Bicycle Co.",  cat: "Logo system", year: "23", w: 480, h: 460, swatch: "art-7" },
-  { id: "b8",  name: "Wreckage Bureau",   cat: "Editorial",   year: "23", w: 360, h: 540, swatch: "art-8" },
-  { id: "b9",  name: "Type Specimen / A", cat: "Type design", year: "23", w: 420, h: 460, swatch: "art-9" },
-  { id: "b10", name: "Quiet Hours",       cat: "Poster",      year: "22", w: 320, h: 460, swatch: "art-10" },
-  { id: "b11", name: "City of Tomorrow",  cat: "Campaign",    year: "22", w: 540, h: 460, swatch: "art-11" },
-  { id: "b12", name: "ATELIER — MK",      cat: "Identity",    year: "22", w: 380, h: 540, swatch: "art-12" },
+  { id: "b1",  name: "Kintsugi Studios",  cat: "Identity",    year: "25", w: 420, h: 540, swatch: "art-1",
+    img: UN_C("1545239351-1141bd82e8a6") },
+  { id: "b2",  name: "Halt & Heat",       cat: "Poster",      year: "25", w: 320, h: 460, swatch: "art-2",
+    img: UN_C("1547891654-e66ed7ebb968") },
+  { id: "b3",  name: "Open Routes",       cat: "Wayfinding",  year: "24", w: 540, h: 460, swatch: "art-3",
+    img: UN_C("1565299507177-b0ac66763828") },
+  { id: "b4",  name: "Folio No. 04",      cat: "Editorial",   year: "24", w: 360, h: 460, swatch: "art-4",
+    img: UN_C("1456513080510-7bf3a84b82f8") },
+  { id: "b5",  name: "Field Recordings",  cat: "Identity",    year: "24", w: 420, h: 540, swatch: "art-5",
+    img: UN_C("1517336714731-489689fd1ca8") },
+  { id: "b6",  name: "MNML / 03",         cat: "Poster",      year: "23", w: 320, h: 460, swatch: "art-6",
+    img: UN_C("1611339555312-e607c8352fd7") },
+  { id: "b7",  name: "Loop Bicycle Co.",  cat: "Logo system", year: "23", w: 480, h: 460, swatch: "art-7",
+    img: UN_C("1502744688674-c619d1586c9e") },
+  { id: "b8",  name: "Wreckage Bureau",   cat: "Editorial",   year: "23", w: 360, h: 540, swatch: "art-8",
+    img: UN_C("1497633762265-9d179a990aa6") },
+  { id: "b9",  name: "Type Specimen / A", cat: "Type design", year: "23", w: 420, h: 460, swatch: "art-9",
+    img: UN_C("1531913764164-f85c52e6e654") },
+  { id: "b10", name: "Quiet Hours",       cat: "Poster",      year: "22", w: 320, h: 460, swatch: "art-10",
+    img: UN_C("1493663284031-b7e3aefcae8e") },
+  { id: "b11", name: "City of Tomorrow",  cat: "Campaign",    year: "22", w: 540, h: 460, swatch: "art-11",
+    img: UN_C("1485827404703-89b55fcc595e") },
+  { id: "b12", name: "ATELIER — MK",      cat: "Identity",    year: "22", w: 380, h: 540, swatch: "art-12",
+    img: UN_C("1556761175-5973dc0f32e7") },
 ];
 
 function ArtSwatch({ variant }) {
@@ -1636,15 +1826,34 @@ function ArtSwatch({ variant }) {
   }
 }
 
+/* Thumb wrapper for collage items: prefers the real image, falls back to the
+   SVG art swatch if the network image fails to load. Keeps the parent JSX clean. */
+function CollageThumb({ item }) {
+  const [failed, setFailed] = useStateCol(false);
+  if (!item.img || failed) return <ArtSwatch variant={item.swatch} name={item.name} />;
+  return (
+    <img
+      src={item.img}
+      alt={`${item.name} — ${item.cat}`}
+      loading="lazy"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 function Collage() {
   const trackRef = useRefCol(null);
+  const gridRef = useRefCol(null);
   const [progress, setProgress] = useStateCol(0);
   const [paused, setPaused] = useStateCol(false);
+  const [view, setView] = useStateCol("strip"); // 'strip' | 'grid'
   const dragState = useRefCol({ active: false, startX: 0, startLeft: 0, moved: 0 });
 
+  // Auto-scroll loop only when in strip view
   useEffectCol(() => {
+    if (view !== "strip") return undefined;
     const el = trackRef.current;
-    if (!el) return;
+    if (!el) return undefined;
     let raf = 0, last = performance.now();
     const tick = (now) => {
       const dt = now - last; last = now;
@@ -1660,11 +1869,13 @@ function Collage() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [paused]);
+  }, [paused, view]);
 
+  // Drag-to-scroll only for strip view
   useEffectCol(() => {
+    if (view !== "strip") return undefined;
     const el = trackRef.current;
-    if (!el) return;
+    if (!el) return undefined;
     const onDown = (e) => {
       dragState.current = { active: true, startX: e.touches ? e.touches[0].clientX : e.clientX, startLeft: el.scrollLeft, moved: 0 };
       el.classList.add("dragging"); setPaused(true);
@@ -1697,28 +1908,37 @@ function Collage() {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
     };
-  }, []);
+  }, [view]);
 
+  // Per-view: track scroll progress + reveal-on-scroll for cards.
+  // The IntersectionObserver re-runs when view changes so newly-rendered cards
+  // still animate in (the previous-view cards are unmounted).
   useEffectCol(() => {
-    const el = trackRef.current;
-    if (!el) return;
-    const onScroll = () => {
-      const max = el.scrollWidth - el.clientWidth;
-      setProgress(max > 0 ? el.scrollLeft / max : 0);
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
+    const container = view === "strip" ? trackRef.current : gridRef.current;
+    if (!container) return undefined;
+    const cleanups = [];
+    if (view === "strip") {
+      const el = trackRef.current;
+      const onScroll = () => {
+        const max = el.scrollWidth - el.clientWidth;
+        setProgress(max > 0 ? el.scrollLeft / max : 0);
+      };
+      el.addEventListener("scroll", onScroll, { passive: true });
+      cleanups.push(() => el.removeEventListener("scroll", onScroll));
+    }
     const obs = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (e.isIntersecting) {
           const idx = Number(e.target.getAttribute("data-i") || 0);
-          setTimeout(() => e.target.classList.add("in"), idx * 70);
+          setTimeout(() => e.target.classList.add("in"), idx * 60);
           obs.unobserve(e.target);
         }
       });
-    }, { threshold: 0.15 });
-    el.querySelectorAll(".collage-card").forEach((card) => obs.observe(card));
-    return () => { el.removeEventListener("scroll", onScroll); obs.disconnect(); };
-  }, []);
+    }, { threshold: 0.12 });
+    container.querySelectorAll(".collage-card").forEach((card) => obs.observe(card));
+    cleanups.push(() => obs.disconnect());
+    return () => cleanups.forEach((c) => c());
+  }, [view]);
 
   const scrollBy = (dx) => trackRef.current?.scrollBy({ left: dx, behavior: "smooth" });
 
@@ -1729,39 +1949,102 @@ function Collage() {
           <span className="num" style={{ color: "var(--accent)" }}>§ 03 / Brand</span>
           <h2>Side things, marks &amp; posters</h2>
         </div>
-        <div className="meta"><div>{COLLAGE.length} works · scroll →</div></div>
+        <div className="meta" style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <span>{COLLAGE.length} works · {view === "strip" ? "scroll →" : "3-col grid"}</span>
+          <div className="collage-view-toggle" role="group" aria-label="View mode">
+            <button
+              type="button"
+              aria-pressed={view === "strip"}
+              aria-label="Horizontal strip view"
+              onClick={() => setView("strip")}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="3" y="8" width="6" height="8" />
+                <rect x="11" y="8" width="6" height="8" />
+                <rect x="19" y="8" width="6" height="8" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              aria-pressed={view === "grid"}
+              aria-label="3-column grid view"
+              onClick={() => setView("grid")}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="3" y="3" width="5" height="5" />
+                <rect x="10" y="3" width="5" height="5" />
+                <rect x="17" y="3" width="5" height="5" />
+                <rect x="3" y="10" width="5" height="5" />
+                <rect x="10" y="10" width="5" height="5" />
+                <rect x="17" y="10" width="5" height="5" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="collage-wrap"
-           onMouseEnter={() => setPaused(true)}
-           onMouseLeave={() => setPaused(false)}>
-        <div className="collage-track" ref={trackRef}>
+      {view === "strip" ? (
+        <div className="collage-wrap"
+             onMouseEnter={() => setPaused(true)}
+             onMouseLeave={() => setPaused(false)}>
+          <div className="collage-track" ref={trackRef}>
+            {COLLAGE.map((it, i) => (
+              <article key={it.id} className="collage-card" data-i={i} style={{ width: it.w, height: it.h }}>
+                <div className="thumb">
+                  <CollageThumb item={it} />
+                </div>
+                <div className="meta">
+                  <span className="name">{it.name}</span>
+                  <span className="yr">{it.cat} · '{it.year}</span>
+                </div>
+                <div className="reveal" aria-hidden="true">
+                  <span className="reveal-cat">{it.cat} · {it.year}</span>
+                  <span className="reveal-name">{it.name}</span>
+                  <span className="reveal-arrow">↗</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="collage-grid" ref={gridRef}>
           {COLLAGE.map((it, i) => (
-            <div key={it.id} className="collage-card" data-i={i} style={{ width: it.w, height: it.h }}>
-              <div className="thumb"><ArtSwatch variant={it.swatch} name={it.name} /></div>
+            <article key={it.id} className="collage-card" data-i={i}>
+              <div className="thumb">
+                {it.img
+                  ? <img src={it.img} alt={`${it.name} — ${it.cat}`} loading="lazy" />
+                  : <ArtSwatch variant={it.swatch} name={it.name} />}
+              </div>
               <div className="meta">
                 <span className="name">{it.name}</span>
                 <span className="yr">{it.cat} · '{it.year}</span>
               </div>
-            </div>
+              <div className="reveal" aria-hidden="true">
+                <span className="reveal-cat">{it.cat} · {it.year}</span>
+                <span className="reveal-name">{it.name}</span>
+                <span className="reveal-arrow">↗</span>
+              </div>
+            </article>
           ))}
         </div>
-      </div>
+      )}
 
-      <div className="collage-controls">
-        <span>// Auto-scrolls · drag to grab · or use arrows</span>
-        <div className="collage-progress">
-          <div className="bar" style={{ width: `${Math.max(8, progress * 100)}%` }} />
+      {view === "strip" && (
+        <div className="collage-controls">
+          <span>// Auto-scrolls · drag to grab · or use arrows</span>
+          <div className="collage-progress">
+            <div className="bar" style={{ width: `${Math.max(8, progress * 100)}%` }} />
+          </div>
+          <div className="collage-arrows">
+            <button onClick={() => scrollBy(-400)} aria-label="Previous">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
+            </button>
+            <button onClick={() => scrollBy(400)} aria-label="Next">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </button>
+          </div>
         </div>
-        <div className="collage-arrows">
-          <button onClick={() => scrollBy(-400)} aria-label="Previous">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
-          </button>
-          <button onClick={() => scrollBy(400)} aria-label="Next">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-          </button>
-        </div>
-      </div>
+      )}
     </section>
   );
 }
@@ -2043,6 +2326,108 @@ const DEFAULTS = {
   showOnboarding: true,
 };
 
+/* Floating cursor — a small ring + dot that follows the pointer with subtle
+   lag. State shifts based on what's beneath:
+     default      → small ring, fg outline
+     link/button  → enlarges, fills with fg (a "tap target" cue)
+     accent zone  → fills with accent (matches the contact section's orange)
+     text input   → becomes a vertical "I-beam" bar
+   Disabled on touch/coarse-pointer devices via @media (hover:none) in CSS. */
+function FloatingCursor() {
+  const ringRef = useRef(null);
+  const dotRef = useRef(null);
+  const state = useRef({
+    x: -100, y: -100, tx: -100, ty: -100, raf: 0, kind: "default", visible: false,
+  });
+
+  useEffect(() => {
+    // Skip on touch-only devices — feels off without precise pointer.
+    const fine = window.matchMedia("(hover: hover) and (pointer: fine)");
+    if (!fine.matches) return undefined;
+
+    const ring = ringRef.current;
+    const dot = dotRef.current;
+    if (!ring || !dot) return undefined;
+
+    const setKind = (next) => {
+      if (state.current.kind === next) return;
+      state.current.kind = next;
+      ring.setAttribute("data-kind", next);
+      dot.setAttribute("data-kind", next);
+    };
+
+    const inferKind = (el) => {
+      if (!el) return "default";
+      // Walk up the tree to find an interactive ancestor
+      let n = el;
+      while (n && n !== document.body) {
+        if (n.matches?.("textarea, input[type='text'], input[type='email'], input[type='tel'], input[type='search'], [contenteditable='true']"))
+          return "text";
+        // The contact section has its own orange bg — accent treatment fits there
+        if (n.matches?.(".contact-section, .contact-section *")) {
+          if (n.matches?.("a, button, [role='button'], .method-tile, .submit, .case, .collage-card, .topnav-center a"))
+            return "accent-link";
+          return "accent";
+        }
+        if (n.matches?.("a, button, [role='button'], .case, .collage-card, .rail-item, .hamburger, .theme-toggle, .cta, .topnav-center a, .submit, .method-tile, summary, label, [data-cursor='link']"))
+          return "link";
+        n = n.parentElement;
+      }
+      return "default";
+    };
+
+    const onMove = (e) => {
+      state.current.tx = e.clientX;
+      state.current.ty = e.clientY;
+      if (!state.current.visible) {
+        state.current.visible = true;
+        ring.style.opacity = "1";
+        dot.style.opacity = "1";
+      }
+      setKind(inferKind(e.target));
+    };
+    const onLeave = () => {
+      state.current.visible = false;
+      ring.style.opacity = "0";
+      dot.style.opacity = "0";
+    };
+    const onDown = () => ring.setAttribute("data-pressed", "true");
+    const onUp = () => ring.removeAttribute("data-pressed");
+
+    const tick = () => {
+      const s = state.current;
+      // Two lerp speeds — the dot tracks fast, the ring trails behind for organic feel
+      s.x += (s.tx - s.x) * 0.22;
+      s.y += (s.ty - s.y) * 0.22;
+      const ringX = s.x + (s.tx - s.x) * 0.0; // ring uses the integrated value above
+      const ringY = s.y + (s.ty - s.y) * 0.0;
+      ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%)`;
+      dot.style.transform = `translate3d(${s.tx}px, ${s.ty}px, 0) translate(-50%, -50%)`;
+      s.raf = requestAnimationFrame(tick);
+    };
+    s.raf = requestAnimationFrame(tick);
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseleave", onLeave);
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      cancelAnimationFrame(state.current.raf);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseleave", onLeave);
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, []);
+
+  return (
+    <>
+      <div className="fcursor-ring" ref={ringRef} aria-hidden="true" />
+      <div className="fcursor-dot" ref={dotRef} aria-hidden="true" />
+    </>
+  );
+}
+
 /* Marquee — a continuously-scrolling editorial strip that lives between
    sections. Duplicates its children so the loop is seamless. Pauses on hover. */
 function Marquee() {
@@ -2120,6 +2505,7 @@ function App() {
       <_Footer />
 
       <_OnboardingBubbles enabled={tweaks.showOnboarding} replayKey={replayOnboard} />
+      <FloatingCursor />
 
       <TweaksPanel title="Tweaks">
         <TweakSection title="Hero Animation">
