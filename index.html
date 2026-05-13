@@ -2405,7 +2405,7 @@ function FloatingCursor() {
       dot.style.transform = `translate3d(${s.tx}px, ${s.ty}px, 0) translate(-50%, -50%)`;
       s.raf = requestAnimationFrame(tick);
     };
-    s.raf = requestAnimationFrame(tick);
+    state.current.raf = requestAnimationFrame(tick);
 
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseleave", onLeave);
