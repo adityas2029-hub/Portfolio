@@ -207,8 +207,17 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
   font-weight: 500; position: relative; color: inherit;
   border: 1px solid var(--line-strong); background: transparent;
-  transition: color 240ms ease, border-color 240ms ease;
+  transition: color 240ms ease, border-color 240ms ease, background 240ms ease,
+              transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: transform;
 }
+.cta .cta-inner {
+  display: inline-flex; align-items: center; gap: 10px;
+  transition: transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+/* Inner content parallaxes a touch more than the button itself, so the
+   text/icon "lead" the cursor pull. Subtle — 0.35x of the outer translation. */
+.cta:hover .cta-inner { transform: translate3d(0, 0, 0) scale(1.02); }
 .cta .dot {
   width: 6px; height: 6px; background: var(--accent); border-radius: 50%;
   box-shadow: 0 0 0 0 var(--accent); animation: pulse 2.4s infinite;
@@ -234,14 +243,17 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .cta:hover { border-color: var(--accent); }
 
 /* On the orange contact section the regular CTA becomes invisible
-   (accent-on-accent). Re-skin it to ink-on-orange so it reads. */
-.topnav.on-accent .cta { border-color: var(--accent-ink); color: var(--accent-ink); }
-.topnav.on-accent .cta .dot { background: var(--accent-ink); animation: none; }
-.topnav.on-accent .cta .cta-text .b { color: var(--bg); }
-.topnav.on-accent .cta:hover { border-color: var(--accent-ink); background: var(--accent-ink); color: var(--bg); }
+   (accent-on-accent). Re-skin it as white-on-orange so it reads,
+   then invert on hover to white-bg + orange-text. */
+.topnav.on-accent .cta { border-color: #fff; color: #fff; }
+.topnav.on-accent .cta .dot { background: #fff; animation: none; }
+.topnav.on-accent .cta .cta-text .a,
+.topnav.on-accent .cta .cta-text .b { color: #fff; }
+.topnav.on-accent .cta:hover { background: #fff; border-color: #fff; color: var(--accent); }
 .topnav.on-accent .cta:hover .cta-text .a,
-.topnav.on-accent .cta:hover .cta-text .b { color: var(--bg); }
-.topnav.on-accent .cta:hover .arrow { color: var(--bg); }
+.topnav.on-accent .cta:hover .cta-text .b { color: var(--accent); }
+.topnav.on-accent .cta:hover .arrow { color: var(--accent); }
+.topnav.on-accent .cta:hover .dot { background: var(--accent); }
 
 /* ============================================================
    SIDE PROGRESS RAIL
@@ -675,15 +687,60 @@ section {
 .collage-view-toggle button:not([aria-pressed="true"]):hover { color: var(--fg); }
 .collage-view-toggle svg { width: 14px; height: 14px; }
 
-/* --- Horizontal strip --- */
+/* --- Horizontal strip (larger card variant) --- */
 .collage-wrap { position: relative; margin: 0 calc(var(--pad-x) * -1); padding: 0 0 0 var(--pad-x); }
+.collage-wrap-strip { padding-bottom: 4px; }
 .collage-track {
-  display: flex; gap: 20px; padding-right: var(--pad-x);
+  display: flex; gap: clamp(24px, 3vw, 40px); padding-right: var(--pad-x);
   overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
   -webkit-overflow-scrolling: touch; cursor: grab; user-select: none;
+  align-items: stretch;
 }
 .collage-track.dragging { cursor: grabbing; scroll-snap-type: none; }
 .collage-track::-webkit-scrollbar { display: none; }
+
+/* The 'large' strip variant: each card is poster-tall with a meta block
+   that breathes — name (bold), category line, and a one-line tagline below. */
+.collage-card-large {
+  width: clamp(380px, 38vw, 560px);
+  height: clamp(560px, 70vh, 720px);
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+.collage-card-large .thumb { min-height: 0; }
+.collage-card-large .meta-block {
+  padding: clamp(18px, 2vw, 24px);
+  display: flex; flex-direction: column; gap: 12px;
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+.collage-card-large .meta-block .meta-row {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+}
+.collage-card-large .meta-block .meta-row .name {
+  font-family: var(--font-sans);
+  font-size: clamp(15px, 1.3vw, 19px);
+  font-weight: 500; letter-spacing: -0.015em;
+  text-transform: none;
+}
+.collage-card-large .meta-block .meta-row .yr { color: var(--muted); }
+.collage-card-large .meta-block .tagline {
+  font-family: var(--font-sans);
+  font-size: clamp(13px, 1vw, 15px);
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  color: var(--muted);
+  margin: 0;
+  max-width: 38ch;
+}
+.collage-card-large .tagline em {
+  font-family: var(--font-display); font-style: italic;
+  color: var(--accent);
+}
 
 /* --- Brand marquee: 3 vertical auto-scrolling columns ---
    - Default view. Total height ~140vh, so the user moves past it in ~2 scrolls.
@@ -857,6 +914,26 @@ section {
   font-family: var(--font-display); font-style: italic;
   font-weight: 400; letter-spacing: -0.015em; padding: 0 0.04em;
 }
+/* Word-by-word reveal on viewport entry. Each word's .lh mask hides the
+   .accent / .serif spans, then they slide up when the section gets .revealed.
+   Slightly slower stagger than the section-head reveal so it feels deliberate. */
+.contact-lead .lh {
+  display: inline-block; overflow: hidden; vertical-align: bottom;
+  line-height: inherit;
+}
+.contact-lead .lh > span {
+  display: inline-block;
+  transform: translateY(110%);
+  transition: transform 720ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+#contact.revealed .contact-lead .lh > span {
+  transform: translateY(0);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .contact-lead .lh > span { transition: none; transform: none; }
+}
+
 .contact-lead .accent { color: var(--accent-ink); position: relative; display: inline-block; }
 .contact-lead .accent::after {
   content: ""; position: absolute; left: 0; right: 0; bottom: 0.04em;
@@ -1040,6 +1117,47 @@ section {
 }
 .bubble.from-top::before { top: -4px; left: 18px; }
 .bubble.from-left::before { left: -4px; top: 18px; }
+
+/* ============================================================
+   SCROLL PROGRESS BAR — hairline that fills as you scroll
+   ============================================================ */
+.scroll-progress {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 2px;
+  z-index: 70; /* above topnav transitions */
+  background: transparent;
+  pointer-events: none;
+}
+.scroll-progress-bar {
+  height: 100%; width: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 80ms linear;
+}
+
+/* ============================================================
+   SECTION-HEAD LETTER REVEAL — uniform mask-up on viewport entry
+   ============================================================ */
+.section-head h2 .lh {
+  display: inline-block; overflow: hidden;
+  vertical-align: bottom;
+}
+.section-head h2 .lh > span {
+  display: inline-block;
+  transform: translateY(110%);
+  transition: transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+section.revealed .section-head h2 .lh > span {
+  transform: translateY(0);
+}
+/* Per-letter stagger driven by --i (set in JSX) */
+section.revealed .section-head h2 .lh > span {
+  transition-delay: calc(var(--i, 0) * 22ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .section-head h2 .lh > span { transition: none; transform: none; }
+}
 
 /* ============================================================
    EASTER EGGS + MICRO-ANIMATIONS
@@ -1542,11 +1660,54 @@ Object.assign(window, { useTheme, useScrollSpy, useToneBlend });
 
 <!-- ── Nav ───────────────────────────────────────────────────── -->
 <script type="text/babel">
-const { useState: useStateNav, useEffect: useEffectNav } = React;
+const { useState: useStateNav, useEffect: useEffectNav, useRef: useRefNav } = React;
+
+/* Magnetic hover — the element subtly pulls toward the cursor when hovered.
+   Borrowed from Linear / Vercel / premium portfolios. Subtle on purpose
+   (max 6px translation, 4 deg of inner-text shift) — feels alive without
+   being tacky. Skips touch devices. */
+function useMagnetic(strength = 0.25, max = 6) {
+  const ref = useRefNav(null);
+  useEffectNav(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    // Skip on coarse pointers — magnetic with touch is just lag.
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return undefined;
+    let raf = 0, tx = 0, ty = 0, cx = 0, cy = 0;
+    const tick = () => {
+      cx += (tx - cx) * 0.18;
+      cy += (ty - cy) * 0.18;
+      el.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
+      if (Math.abs(tx - cx) > 0.05 || Math.abs(ty - cy) > 0.05) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        raf = 0;
+      }
+    };
+    const onMove = (e) => {
+      const r = el.getBoundingClientRect();
+      const dx = (e.clientX - (r.left + r.width / 2)) * strength;
+      const dy = (e.clientY - (r.top + r.height / 2)) * strength;
+      tx = Math.max(-max, Math.min(max, dx));
+      ty = Math.max(-max, Math.min(max, dy));
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+    const onLeave = () => { tx = 0; ty = 0; if (!raf) raf = requestAnimationFrame(tick); };
+    el.addEventListener("mousemove", onMove);
+    el.addEventListener("mouseleave", onLeave);
+    return () => {
+      el.removeEventListener("mousemove", onMove);
+      el.removeEventListener("mouseleave", onLeave);
+      cancelAnimationFrame(raf);
+    };
+  }, [strength, max]);
+  return ref;
+}
 
 function TopNav({ onToggleTheme, themeMode, onCta }) {
   const [scrolled, setScrolledNav] = useStateNav(false);
   const [onAccent, setOnAccent] = useStateNav(false);
+  const ctaRef = useMagnetic(0.25, 6);
   useEffectNav(() => {
     const handler = () => {
       setScrolledNav(window.scrollY > 24);
@@ -1577,13 +1738,15 @@ function TopNav({ onToggleTheme, themeMode, onCta }) {
           data-onboard="theme">
           <ThemeIcon mode={themeMode} />
         </button>
-        <a href="#contact" className="cta" onClick={onCta} data-onboard="cta">
-          <span className="dot"></span>
-          <span className="cta-text">
-            <span className="a">Let's work together</span>
-            <span className="b">Say hello</span>
+        <a href="#contact" className="cta" onClick={onCta} data-onboard="cta" ref={ctaRef}>
+          <span className="cta-inner">
+            <span className="dot"></span>
+            <span className="cta-text">
+              <span className="a">Let's work together</span>
+              <span className="b">Say hello</span>
+            </span>
+            <span className="arrow" aria-hidden="true">→</span>
           </span>
-          <span className="arrow" aria-hidden="true">→</span>
         </a>
       </div>
     </header>
@@ -1873,7 +2036,7 @@ function Work() {
       <div className="section-head">
         <div style={{ display: "flex", gap: 20, alignItems: "baseline" }}>
           <span className="num" style={{ color: "var(--accent)" }}>§ 02 / Work</span>
-          <h2>Three pieces I'd still ship today</h2>
+          <h2><LetterReveal text="Three pieces I'd still ship today" /></h2>
         </div>
         <div className="meta"><div>03 case studies · 2023 — 2025</div></div>
       </div>
@@ -1927,18 +2090,30 @@ const { useRef: useRefCol, useEffect: useEffectCol, useState: useStateCol } = Re
    visual language, no remote image dependency. Swap any of these for real
    covers later by adding an `img` field; CollageThumb prefers it when set. */
 const COLLAGE = [
-  { id: "b1",  name: "Kintsugi Studios",  cat: "Identity",    year: "25", w: 420, h: 540, swatch: "art-1"  },
-  { id: "b2",  name: "Halt & Heat",       cat: "Poster",      year: "25", w: 320, h: 460, swatch: "art-2"  },
-  { id: "b3",  name: "Open Routes",       cat: "Wayfinding",  year: "24", w: 540, h: 460, swatch: "art-3"  },
-  { id: "b4",  name: "Folio No. 04",      cat: "Editorial",   year: "24", w: 360, h: 460, swatch: "art-4"  },
-  { id: "b5",  name: "Field Recordings",  cat: "Identity",    year: "24", w: 420, h: 540, swatch: "art-5"  },
-  { id: "b6",  name: "MNML / 03",         cat: "Poster",      year: "23", w: 320, h: 460, swatch: "art-6"  },
-  { id: "b7",  name: "Loop Bicycle Co.",  cat: "Logo system", year: "23", w: 480, h: 460, swatch: "art-7"  },
-  { id: "b8",  name: "Wreckage Bureau",   cat: "Editorial",   year: "23", w: 360, h: 540, swatch: "art-8"  },
-  { id: "b9",  name: "Type Specimen / A", cat: "Type design", year: "23", w: 420, h: 460, swatch: "art-9"  },
-  { id: "b10", name: "Quiet Hours",       cat: "Poster",      year: "22", w: 320, h: 460, swatch: "art-10" },
-  { id: "b11", name: "City of Tomorrow",  cat: "Campaign",    year: "22", w: 540, h: 460, swatch: "art-11" },
-  { id: "b12", name: "ATELIER — MK",      cat: "Identity",    year: "22", w: 380, h: 540, swatch: "art-12" },
+  { id: "b1",  name: "Kintsugi Studios",   cat: "Identity",    year: "25", swatch: "art-1",
+    tag: "A ceramics atelier wearing its cracks on the outside." },
+  { id: "b2",  name: "Halt & Heat",        cat: "Poster",      year: "25", swatch: "art-2",
+    tag: "Type that breathes before it shouts. Festival branding for a sound-art week." },
+  { id: "b3",  name: "Open Routes",        cat: "Wayfinding",  year: "24", swatch: "art-3",
+    tag: "Signage so quiet you barely notice — until it saves your tenth left turn." },
+  { id: "b4",  name: "Folio No. 04",       cat: "Editorial",   year: "24", swatch: "art-4",
+    tag: "A 96-page editorial about waiting. Yes, on purpose." },
+  { id: "b5",  name: "Field Recordings",   cat: "Identity",    year: "24", swatch: "art-5",
+    tag: "Identity for an ambient label. Concentric, exactly as the music." },
+  { id: "b6",  name: "MNML / 03",          cat: "Poster",      year: "23", swatch: "art-6",
+    tag: "Three letters. Two colours. One decision per inch." },
+  { id: "b7",  name: "Loop Bicycle Co.",   cat: "Logo system", year: "23", swatch: "art-7",
+    tag: "A logo that rolls — even when you don't." },
+  { id: "b8",  name: "Wreckage Bureau",    cat: "Editorial",   year: "23", swatch: "art-8",
+    tag: "Crime-fiction quarterly with the calm of a coroner's report." },
+  { id: "b9",  name: "Type Specimen / A",  cat: "Type design", year: "23", swatch: "art-9",
+    tag: "A single 'A', drawn 47 ways. Most of them survived." },
+  { id: "b10", name: "Quiet Hours",        cat: "Poster",      year: "22", swatch: "art-10",
+    tag: "A reminder that quiet is a feature, not a bug." },
+  { id: "b11", name: "City of Tomorrow",   cat: "Campaign",    year: "22", swatch: "art-11",
+    tag: "Civic campaign on housing. The bars are floors, the rest is up to us." },
+  { id: "b12", name: "ATELIER — MK",       cat: "Identity",    year: "22", swatch: "art-12",
+    tag: "Identity for a one-person studio. Built around the letter K." },
 ];
 
 /* Inline SVG mockups for case study covers — keeps the page lightweight and
@@ -2270,7 +2445,7 @@ function Collage() {
       <div className="section-head">
         <div style={{ display: "flex", gap: 20, alignItems: "baseline" }}>
           <span className="num" style={{ color: "var(--accent)" }}>§ 03 / Brand</span>
-          <h2>Side things, marks &amp; posters</h2>
+          <h2><LetterReveal text="Side things, marks & posters" /></h2>
         </div>
         <div className="meta" style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <span>{COLLAGE.length} works · {view === "strip" ? "scroll →" : "3-col grid"}</span>
@@ -2307,18 +2482,23 @@ function Collage() {
       </div>
 
       {view === "strip" ? (
-        <div className="collage-wrap"
+        /* Single-line strip — bigger cards, each carrying name + a catchy
+           tagline. Horizontal scroller with auto-pace + drag. */
+        <div className="collage-wrap collage-wrap-strip"
              onMouseEnter={() => setPaused(true)}
              onMouseLeave={() => setPaused(false)}>
           <div className="collage-track" ref={trackRef}>
             {COLLAGE.map((it, i) => (
-              <article key={it.id} className="collage-card" data-i={i} style={{ width: it.w, height: it.h }}>
+              <article key={it.id} className="collage-card collage-card-large" data-i={i}>
                 <div className="thumb">
                   <CollageThumb item={it} />
                 </div>
-                <div className="meta">
-                  <span className="name">{it.name}</span>
-                  <span className="yr">{it.cat} · '{it.year}</span>
+                <div className="meta-block">
+                  <div className="meta-row">
+                    <span className="name">{it.name}</span>
+                    <span className="yr">{it.cat} · '{it.year}</span>
+                  </div>
+                  <p className="tagline">{it.tag}</p>
                 </div>
                 <div className="reveal" aria-hidden="true">
                   <span className="reveal-cat">{it.cat} · {it.year}</span>
@@ -2408,17 +2588,23 @@ function Contact() {
       <div className="section-head">
         <div style={{ display: "flex", gap: 20, alignItems: "baseline" }}>
           <span className="num">§ 04 / Contact</span>
-          <h2>Say hello</h2>
+          <h2><LetterReveal text="Say hello" /></h2>
         </div>
         <div className="meta"><div>Replies within 24h · usually faster</div></div>
       </div>
 
       <div className="contact">
         {/* 1. Lead */}
+        {/* Each word lives in its own .lh mask. Stagger comes from --i.
+            Triggered when the contact-section gets the .revealed class
+            (same IntersectionObserver that fires section-head reveals). */}
         <h3 className="contact-lead">
-          Let's make <br />
-          <span className="accent">something</span><br />
-          <span className="serif">worth</span> the attention.
+          <span className="lh"><span style={{ "--i": 0 }}>Let's</span></span>{" "}
+          <span className="lh"><span style={{ "--i": 1 }}>make</span></span><br />
+          <span className="lh"><span style={{ "--i": 2 }} className="accent">something</span></span><br />
+          <span className="lh"><span style={{ "--i": 3 }} className="serif">worth</span></span>{" "}
+          <span className="lh"><span style={{ "--i": 4 }}>the</span></span>{" "}
+          <span className="lh"><span style={{ "--i": 5 }}>attention.</span></span>
         </h3>
 
         {/* 2. Status strip */}
@@ -2696,6 +2882,31 @@ function KonamiEgg() {
 }
 
 /* Scroll-to-top — appears after scrolling past the hero, smooth-scrolls home. */
+/* Top scroll-progress bar — a single hairline fills with accent as you scroll.
+   Quiet and unobtrusive; lives at the very top above the topnav. */
+function ScrollProgress() {
+  const barRef = useRef(null);
+  useEffect(() => {
+    const onScroll = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      const p = max > 0 ? window.scrollY / max : 0;
+      if (barRef.current) barRef.current.style.transform = `scaleX(${p})`;
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+  return (
+    <div className="scroll-progress" aria-hidden="true">
+      <div className="scroll-progress-bar" ref={barRef} />
+    </div>
+  );
+}
+
 function ScrollTop() {
   const [shown, setShown] = useState(false);
   useEffect(() => {
@@ -2817,6 +3028,36 @@ function FloatingCursor() {
 
 /* Marquee — a continuously-scrolling editorial strip that lives between
    sections. Duplicates its children so the loop is seamless. Pauses on hover. */
+/* LetterReveal — splits text into chars wrapped in masked spans.
+   Reveal animation is driven by CSS on the parent .revealed section. */
+function LetterReveal({ text }) {
+  // Split on word boundaries so words don't break across lines mid-letter.
+  const words = text.split(" ");
+  let charIdx = 0;
+  return (
+    <>
+      {words.map((w, wi) => (
+        <span key={wi} className="lr-word">
+          {[...w].map((c, ci) => {
+            const i = charIdx++;
+            return (
+              <span key={ci} className="lh">
+                <span style={{ "--i": i }}>{c}</span>
+              </span>
+            );
+          })}
+          {wi < words.length - 1 && (
+            <span className="lh" aria-hidden="true">
+              <span style={{ "--i": charIdx++ }}>&nbsp;</span>
+            </span>
+          )}
+        </span>
+      ))}
+    </>
+  );
+}
+Object.assign(window, { LetterReveal });
+
 function Marquee() {
   const ITEMS = [
     "Selected work, below",
@@ -2891,6 +3132,7 @@ function App() {
       </main>
       <_Footer />
 
+      <ScrollProgress />
       <_OnboardingBubbles enabled={tweaks.showOnboarding} replayKey={replayOnboard} />
       <FloatingCursor />
       <ScrollTop />
