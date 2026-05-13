@@ -8,7 +8,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;450;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 
 <style>
 /* ============================================================
@@ -36,6 +36,7 @@
   --pad-y: clamp(20px, 3vw, 32px);
   /* Header gets extra horizontal breathing room beyond the section grid */
   --pad-x-header: clamp(24px, 5.5vw, 48px);
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-display: "Instrument Serif", "Times New Roman", Georgia, serif;
   --transition: 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -70,15 +71,31 @@ html, body {
   margin: 0; padding: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: var(--font-mono);
+  /* Inter for body and headlines — professional, friendly proportions */
+  font-family: var(--font-sans);
   font-weight: 400;
-  font-size: 14px;
-  line-height: 1.45;
-  letter-spacing: -0.01em;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  font-feature-settings: "ss01", "cv11"; /* Inter's stylistic alternates: cleaner '1' and 'a' */
   transition: background 600ms ease, color 600ms ease;
   scroll-behavior: smooth;
   overflow-x: hidden;
 }
+
+/* Mono for "system" voice — labels, meta, eyebrows, numbers, section markers */
+.mono, .eyebrow, .label,
+.hero-eyebrow, .hero-footer, .scroll-cue,
+.section-head .num, .section-head h2, .section-head .meta,
+.case-num, .case .case-meta .tags, .case .placeholder-tag,
+.collage-card .meta, .collage-controls, .topnav-center, .cta,
+.footer .col .hd, .footer-bottom, .menu-foot,
+.contact-card .row .k, .bubble {
+  font-family: var(--font-mono);
+}
+
+/* Section numbers use mono with tabular figures for crisp alignment */
+.case-num, .hero-footer .v, .num, .footer-bottom { font-variant-numeric: tabular-nums; }
 
 /* Focus — keyboard nav must be clearly visible at all times */
 :focus-visible {
@@ -320,6 +337,38 @@ section {
 }
 
 /* ============================================================
+   MARQUEE — editorial scrolling strip between sections
+   ============================================================ */
+.marquee {
+  position: relative;
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: clamp(16px, 1.8vw, 22px) 0;
+  background: var(--bg);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+}
+.marquee-track {
+  display: inline-flex; flex-wrap: nowrap; gap: 48px;
+  white-space: nowrap; width: max-content;
+  animation: marquee-scroll 60s linear infinite;
+  will-change: transform;
+}
+.marquee:hover .marquee-track { animation-play-state: paused; }
+.marquee-item {
+  display: inline-flex; align-items: center; gap: 18px;
+  font-family: var(--font-mono);
+  font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted);
+}
+.marquee-item .dot { color: var(--accent); font-size: 8px; }
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-33.333%); }
+}
+
+/* ============================================================
    HERO — fixed layout, proper clearance from side nav
    ============================================================ */
 .hero {
@@ -343,10 +392,10 @@ section {
 @keyframes blink { 50% { opacity: 0; } }
 
 .intro-text {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: clamp(28px, 4.4vw, 64px);
-  line-height: 1.1;
+  font-family: var(--font-sans);
+  font-weight: 450;
+  font-size: clamp(30px, 4.8vw, 72px);
+  line-height: 1.06;
   letter-spacing: -0.03em;
   max-width: 20ch;
   margin: 0;
@@ -394,9 +443,9 @@ section {
 }
 
 .hero-sub {
-  font-family: var(--font-mono); font-weight: 400;
-  font-size: clamp(13px, 1.05vw, 15px); line-height: 1.65;
-  letter-spacing: -0.005em; max-width: 50ch;
+  font-family: var(--font-sans); font-weight: 400;
+  font-size: clamp(14px, 1.05vw, 17px); line-height: 1.6;
+  letter-spacing: -0.005em; max-width: 56ch;
   color: var(--muted); margin: clamp(28px, 4vw, 44px) 0 0;
 }
 .hero-sub em {
@@ -412,9 +461,11 @@ section {
   padding-top: clamp(32px, 5vh, 56px);
   margin-top: clamp(48px, 8vh, 96px);
   border-top: 1px solid var(--line);
-  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 24px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px;
   font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
 }
+.hero-footer .col-now .v { text-transform: none; font-style: italic; font-family: var(--font-display); font-size: 16px; letter-spacing: -0.005em; color: var(--accent); }
+.hero-eyebrow .clock-time { color: var(--accent); font-variant-numeric: tabular-nums; }
 .hero-footer .col { display: flex; flex-direction: column; gap: 6px; }
 .hero-footer .col .k { color: var(--muted); font-size: 10px; letter-spacing: 0.14em; }
 .hero-footer .col .v { color: var(--fg); font-weight: 500; }
@@ -447,38 +498,82 @@ section {
 .case {
   display: grid; grid-template-columns: 72px 1fr 1.3fr;
   gap: clamp(24px, 4vw, 48px);
-  padding: clamp(28px, 4vw, 44px) 0;
+  padding: clamp(28px, 4vw, 44px) clamp(20px, 2vw, 32px) clamp(28px, 4vw, 44px) clamp(20px, 2vw, 32px);
   border-top: 1px solid var(--line);
   position: relative; cursor: pointer;
-  transition: background var(--transition), padding-left var(--transition);
+  transition: padding 420ms cubic-bezier(0.2, 0.7, 0.2, 1), background 420ms ease;
 }
-/* Left-border accent on hover — uses padding shift to reveal the border cleanly */
+/* Layer 1: full-width accent overlay that sweeps in from left */
 .case::before {
-  content: ""; position: absolute; left: 0; top: 0; bottom: 0;
-  width: 2px; background: var(--accent);
-  transform: scaleY(0); transform-origin: bottom;
-  transition: transform 360ms cubic-bezier(0.7, 0, 0.2, 1);
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--accent) 7%, transparent) 0%,
+    transparent 60%);
+  opacity: 0;
+  transition: opacity 420ms ease;
+  pointer-events: none;
+  z-index: 0;
 }
-.case:hover::before { transform: scaleY(1); }
+/* Layer 2: vertical accent bar on left edge that grows from top */
+.case::after {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: var(--accent);
+  transform: scaleY(0); transform-origin: top center;
+  transition: transform 520ms cubic-bezier(0.65, 0, 0.35, 1);
+  z-index: 1;
+}
+.case:hover { background: transparent; padding-left: clamp(32px, 3.5vw, 56px); }
+.case:hover::before { opacity: 1; }
+.case:hover::after { transform: scaleY(1); }
 .case:last-child { border-bottom: 1px solid var(--line); }
-.case .case-num { font-size: 11px; letter-spacing: 0.15em; color: var(--muted); padding-top: 4px; }
+.case > * { position: relative; z-index: 2; }
+.case .case-num {
+  font-size: 11px; letter-spacing: 0.18em; color: var(--muted); padding-top: 6px;
+  transition: color 320ms ease, transform 420ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
 .case .case-meta { display: flex; flex-direction: column; gap: 14px; }
 .case .case-meta .tags { display: flex; flex-wrap: wrap; gap: 6px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-.case .case-meta .tag { border: 1px solid var(--line); padding: 4px 8px; }
-.case .case-title {
-  font-size: clamp(24px, 3vw, 48px); font-weight: 500;
-  line-height: 1.02; letter-spacing: -0.03em; margin: 0;
-  transition: transform var(--transition), color var(--transition);
+.case .case-meta .tag {
+  border: 1px solid var(--line); padding: 4px 8px;
+  transition: border-color 320ms ease, color 320ms ease, background 320ms ease;
 }
-.case .case-sub { font-size: 13px; color: var(--muted); max-width: 38ch; }
+/* Tags stagger in colour on hover for a subtle "ripple" feel */
+.case:hover .case-meta .tag { border-color: var(--accent); color: var(--accent); }
+.case:hover .case-meta .tag:nth-child(1) { transition-delay: 0ms; }
+.case:hover .case-meta .tag:nth-child(2) { transition-delay: 60ms; }
+.case:hover .case-meta .tag:nth-child(3) { transition-delay: 120ms; }
+.case:hover .case-meta .tag:nth-child(4) { transition-delay: 180ms; }
+.case .case-title {
+  font-family: var(--font-sans);
+  font-size: clamp(26px, 3.2vw, 52px); font-weight: 500;
+  line-height: 1.04; letter-spacing: -0.025em; margin: 0;
+  transition: transform 420ms cubic-bezier(0.2, 0.7, 0.2, 1),
+              color 320ms ease, letter-spacing 420ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.case .case-sub { font-family: var(--font-sans); font-size: 14px; color: var(--muted); max-width: 42ch; line-height: 1.55; }
 .case .case-thumb {
   position: relative; aspect-ratio: 16 / 10;
   background: var(--line); overflow: hidden; display: grid; place-items: center;
+  transition: transform 620ms cubic-bezier(0.2, 0.7, 0.2, 1), filter 420ms ease;
+  transform-origin: center;
 }
 .case .case-thumb::before {
   content: ""; position: absolute; inset: 0;
   background-image: repeating-linear-gradient(45deg, transparent 0 8px, rgba(0,0,0,0.04) 8px 9px);
+  transition: opacity 420ms ease, background-image 420ms ease;
 }
+/* Accent veil that fades in over the thumb on hover */
+.case .case-thumb::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(135deg,
+    color-mix(in oklab, var(--accent) 28%, transparent) 0%,
+    transparent 70%);
+  opacity: 0; transition: opacity 520ms ease;
+  mix-blend-mode: multiply;
+}
+.case:hover .case-thumb { transform: scale(1.018); filter: contrast(1.05); }
+.case:hover .case-thumb::before { opacity: 0.45; }
+.case:hover .case-thumb::after { opacity: 1; }
 [data-theme="dark"] .case .case-thumb::before {
   background-image: repeating-linear-gradient(45deg, transparent 0 8px, rgba(255,255,255,0.06) 8px 9px);
 }
@@ -494,14 +589,28 @@ section {
 .case .case-thumb .corner.bl { bottom: 8px; left: 8px; border-right: 0; border-top: 0; }
 .case .case-thumb .corner.br { bottom: 8px; right: 8px; border-left: 0; border-top: 0; }
 .case .open-arrow {
-  position: absolute; right: 0; top: clamp(28px, 4vw, 44px);
-  width: 40px; height: 40px; display: grid; place-items: center;
-  border: 1px solid var(--line);
-  transition: transform var(--transition), background var(--transition), color var(--transition), border-color var(--transition);
+  position: absolute; right: clamp(8px, 1.5vw, 20px); top: clamp(28px, 4vw, 44px);
+  width: 44px; height: 44px; display: grid; place-items: center;
+  border: 1px solid var(--line); border-radius: 50%;
+  transition: transform 520ms cubic-bezier(0.2, 0.7, 0.2, 1),
+              background 320ms ease, color 320ms ease, border-color 320ms ease;
+  overflow: hidden;
 }
-.case:hover .open-arrow { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); transform: rotate(-45deg); }
-.case:hover .case-title { transform: translateX(8px); color: var(--accent); }
-.case:hover .case-num { color: var(--accent); }
+.case .open-arrow svg {
+  transition: transform 520ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.case:hover .open-arrow {
+  background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
+  transform: rotate(-45deg) scale(1.08);
+}
+.case:hover .open-arrow svg { transform: scale(1.1); }
+/* Title — counter-intuitive small left-shift + tightened tracking gives the
+   sense of the row "leaning in" toward the reader. Color shift is the payoff. */
+.case:hover .case-title {
+  color: var(--accent); letter-spacing: -0.03em;
+  transform: translateX(-2px);
+}
+.case:hover .case-num { color: var(--accent); transform: translateX(-2px); }
 
 /* ============================================================
    COLLAGE — HORIZONTAL STRIP
@@ -560,47 +669,153 @@ section {
 .contact-section .section-head { border-top-color: rgba(15,10,7,0.25); }
 .contact-section .section-head .num,
 .contact-section .section-head .meta { color: rgba(15,10,7,0.7); }
-.contact { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(40px, 8vw, 120px); }
+/* Contact — restructured as a vertical narrative:
+   1. Bold lead (full width)
+   2. Status strip with availability + clock + reply time
+   3. Three large method tiles (email, phone, linkedin) — the primary call-to-action
+   4. Slim inline note form — a single low-friction text box */
+.contact { display: flex; flex-direction: column; gap: clamp(48px, 7vw, 96px); }
+
 .contact-lead {
-  font-family: var(--font-mono); font-size: clamp(36px, 5.6vw, 88px);
-  font-weight: 500; line-height: 0.98; letter-spacing: -0.045em; margin: 0;
+  font-family: var(--font-sans); font-size: clamp(44px, 7.5vw, 120px);
+  font-weight: 500; line-height: 0.96; letter-spacing: -0.04em; margin: 0;
+  max-width: 14ch;
 }
-.contact-lead .serif { font-family: var(--font-display); font-style: italic; font-weight: 400; letter-spacing: -0.015em; padding: 0 0.05em; }
-.contact-lead .underline { position: relative; display: inline-block; cursor: pointer; }
-.contact-lead .underline::after {
-  content: ""; position: absolute; left: 0; right: 0; bottom: 4px;
-  height: 3px; background: currentColor; transform-origin: left; transform: scaleX(1);
-  transition: transform 500ms cubic-bezier(0.7, 0, 0.2, 1);
+.contact-lead .serif {
+  font-family: var(--font-display); font-style: italic;
+  font-weight: 400; letter-spacing: -0.015em; padding: 0 0.04em;
 }
-.contact-lead .underline:hover::after { transform: scaleX(0); transform-origin: right; }
-.contact-card {
-  border: 1.5px solid rgba(15,10,7,0.85); padding: clamp(20px, 3vw, 32px);
-  display: flex; flex-direction: column; gap: 18px; height: fit-content;
-  background: rgba(15,10,7,0.04);
+.contact-lead .accent { color: var(--accent-ink); position: relative; display: inline-block; }
+.contact-lead .accent::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0.04em;
+  height: 6px; background: var(--accent-ink); opacity: 0.12;
+  transform-origin: left; transition: transform 600ms cubic-bezier(0.7, 0, 0.2, 1);
 }
-.contact-card .row {
-  display: flex; justify-content: space-between; align-items: center;
-  border-bottom: 1px dashed rgba(15,10,7,0.3); padding-bottom: 14px; gap: 16px;
+.contact-lead .accent:hover::after { transform: scaleX(0.98) translateY(2px); opacity: 0.25; }
+
+/* Status strip */
+.contact-status {
+  display: flex; flex-wrap: wrap; gap: clamp(24px, 4vw, 56px) clamp(32px, 5vw, 80px);
+  align-items: baseline;
+  border-top: 1px solid rgba(15,10,7,0.25);
+  border-bottom: 1px solid rgba(15,10,7,0.25);
+  padding: clamp(18px, 2vw, 24px) 0;
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
 }
-.contact-card .row:last-of-type { border-bottom: 0; }
-.contact-card .row .k { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(15,10,7,0.6); }
-.contact-card .row .v { font-size: 14px; display: flex; align-items: center; gap: 10px; color: var(--accent-ink); }
-.contact-card .row a.v { position: relative; transition: opacity var(--transition); }
-.contact-card .row a.v:hover { opacity: 0.7; }
-.contact-card .row .v .arrow { display: inline-block; transition: transform var(--transition); }
-.contact-card .row a.v:hover .arrow { transform: translate(2px, -2px); }
-.contact-card .li-logo { display: inline-grid; place-items: center; width: 22px; height: 22px; background: var(--accent-ink); color: var(--accent); font-weight: 700; font-size: 11px; }
-.contact-card .form { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
-.contact-card input, .contact-card textarea {
-  font: inherit; color: var(--accent-ink); background: transparent; border: 0;
-  border-bottom: 1.5px solid rgba(15,10,7,0.3); padding: 10px 0; outline: none;
-  transition: border-color var(--transition); width: 100%; resize: none;
+.contact-status .pair { display: flex; flex-direction: column; gap: 6px; }
+.contact-status .pair .k { color: rgba(15,10,7,0.55); font-size: 10px; }
+.contact-status .pair .v {
+  color: var(--accent-ink); font-weight: 500; font-size: 13px;
+  letter-spacing: 0.06em; display: inline-flex; align-items: center; gap: 8px;
 }
-.contact-card input::placeholder, .contact-card textarea::placeholder { color: rgba(15,10,7,0.45); }
-.contact-card input:focus, .contact-card textarea:focus { border-color: var(--accent-ink); }
-.contact-card .submit { margin-top: 8px; align-self: flex-start; border-color: var(--accent-ink); color: var(--accent-ink); }
-.contact-card .submit::before { background: var(--accent-ink); }
-.contact-card .submit:hover { color: var(--accent); }
+.contact-status .status-pulse {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--accent-ink);
+  box-shadow: 0 0 0 0 rgba(15,10,7,0.5); animation: pulse-ink 2.4s infinite;
+}
+@keyframes pulse-ink {
+  0%   { box-shadow: 0 0 0 0 rgba(15,10,7,0.5); }
+  70%  { box-shadow: 0 0 0 8px rgba(15,10,7,0); }
+  100% { box-shadow: 0 0 0 0 rgba(15,10,7,0); }
+}
+
+/* Method tiles — three large cards */
+.contact-methods {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: clamp(16px, 2vw, 24px);
+}
+.method-tile {
+  position: relative;
+  display: flex; flex-direction: column; gap: 24px;
+  padding: clamp(24px, 3vw, 36px);
+  border: 1.5px solid rgba(15,10,7,0.85);
+  background: transparent;
+  color: var(--accent-ink);
+  overflow: hidden;
+  transition: background 380ms ease, color 380ms ease, transform 520ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  min-height: 200px;
+}
+.method-tile::before {
+  content: ""; position: absolute; inset: 0;
+  background: var(--accent-ink);
+  transform: translateY(101%);
+  transition: transform 520ms cubic-bezier(0.7, 0, 0.2, 1);
+  z-index: 0;
+}
+.method-tile > * { position: relative; z-index: 1; }
+.method-tile:hover { color: var(--accent); transform: translateY(-3px); }
+.method-tile:hover::before { transform: translateY(0); }
+.method-tile .tile-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+}
+.method-tile .tile-head .k { opacity: 0.6; }
+.method-tile .tile-head .arrow {
+  display: inline-block;
+  transition: transform 420ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.method-tile:hover .tile-head .arrow { transform: translate(4px, -4px); }
+.method-tile .tile-value {
+  font-family: var(--font-sans);
+  font-size: clamp(16px, 1.5vw, 22px);
+  font-weight: 500; letter-spacing: -0.015em;
+  line-height: 1.25;
+  margin-top: auto;
+  word-break: break-word;
+}
+.method-tile .tile-meta {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  opacity: 0.55;
+}
+
+/* Inline note form — single textarea + send. No name/email needed; mailto handles it. */
+.contact-note {
+  display: grid; grid-template-columns: 1fr auto; gap: 24px;
+  align-items: end;
+  padding-top: clamp(8px, 1.5vw, 16px);
+}
+.contact-note .note-label {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(15,10,7,0.55); margin-bottom: 12px;
+  display: block;
+}
+.contact-note textarea {
+  width: 100%; min-height: 64px; resize: vertical;
+  font: inherit; font-family: var(--font-sans);
+  font-size: clamp(18px, 1.6vw, 24px); line-height: 1.4;
+  color: var(--accent-ink); background: transparent;
+  border: 0; border-bottom: 1.5px solid rgba(15,10,7,0.4);
+  padding: 8px 0 14px; outline: none;
+  transition: border-color 280ms ease;
+}
+.contact-note textarea:focus { border-bottom-color: var(--accent-ink); }
+.contact-note textarea::placeholder { color: rgba(15,10,7,0.4); }
+.contact-note .submit {
+  display: inline-flex; align-items: center; gap: 12px;
+  padding: 14px 22px;
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  font-weight: 500;
+  border: 1.5px solid var(--accent-ink);
+  background: transparent; color: var(--accent-ink);
+  position: relative; overflow: hidden;
+  transition: color 320ms ease;
+  white-space: nowrap;
+}
+.contact-note .submit::before {
+  content: ""; position: absolute; inset: 0;
+  background: var(--accent-ink); transform: translateY(101%);
+  transition: transform 420ms cubic-bezier(0.7, 0, 0.2, 1);
+  z-index: 0;
+}
+.contact-note .submit:hover::before { transform: translateY(0); }
+.contact-note .submit:hover { color: var(--accent); }
+.contact-note .submit > * { position: relative; z-index: 1; }
+.contact-note .submit .arrow { transition: transform 320ms ease; }
+.contact-note .submit:hover .arrow { transform: translateX(4px); }
 
 /* ============================================================
    FOOTER
@@ -681,10 +896,13 @@ section:not(#hero).revealed .section-head {
   /* Reserve room for the fixed hamburger so the theme-toggle doesn't sit on top of it */
   .topnav-right { margin-right: 52px; }
   .hero-footer { grid-template-columns: 1fr 1fr; }
+  .hero-footer .col-now { grid-column: 1 / -1; }
   .case { grid-template-columns: 1fr; gap: 16px; }
   .case .case-num { padding-top: 0; }
   .case .open-arrow { display: none; }
-  .contact { grid-template-columns: 1fr; }
+  .contact-methods { grid-template-columns: 1fr; }
+  .contact-note { grid-template-columns: 1fr; gap: 16px; }
+  .contact-note .submit { justify-self: start; }
   .footer { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 560px) {
@@ -1112,7 +1330,7 @@ Object.assign(window, { TopNav, SideRail, MobileNav });
 
 <!-- ── Hero ──────────────────────────────────────────────────── -->
 <script type="text/babel">
-const { useRef: useRefHero, useEffect: useEffectHero, useCallback: useCallbackHero } = React;
+const { useRef: useRefHero, useEffect: useEffectHero, useCallback: useCallbackHero, useState: useStateHero } = React;
 
 const HEADLINE = "Hello, I am a product, systems and experience designer, bridging the gap between ideas and functionality";
 
@@ -1138,6 +1356,13 @@ function splitChars(s) {
 
 function Hero({ animation = "wave" }) {
   const textRef = useRefHero(null);
+  const [clock, setClock] = useStateHero(() => bangaloreClock());
+
+  useEffectHero(() => {
+    // Tick once per minute — visible enough to feel alive, not jittery.
+    const id = setInterval(() => setClock(bangaloreClock()), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const handleEnter = useCallbackHero(() => {
     const chars = textRef.current?.querySelectorAll(".ch");
@@ -1158,7 +1383,7 @@ function Hero({ animation = "wave" }) {
     <section id="hero" className="hero" data-screen-label="01 Hero">
       <div className="hero-eyebrow">
         <span className="dash"></span>
-        <span>Portfolio · '26 · Bangalore</span>
+        <span>{clock.greeting} · Bangalore · <span className="clock-time">{clock.time}</span></span>
         <span className="blink"></span>
       </div>
 
@@ -1211,13 +1436,46 @@ function Hero({ animation = "wave" }) {
             Open · Q3 '26
           </span>
         </div>
+        <div className="col col-now">
+          <span className="k">Now</span>
+          <span className="v">{clock.now}</span>
+        </div>
       </div>
 
       <div className="scroll-cue" aria-hidden="true">
-        <span>Keep going</span>
+        <span>Three projects below</span>
       </div>
     </section>
   );
+}
+
+/* Live Bangalore clock + time-aware greeting + "Now" snippet.
+   Pure function so it can run during SSR/initial render without side-effects. */
+function bangaloreClock() {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const ist = new Date(utc + (5.5 * 60 * 60 * 1000));
+  const h = ist.getHours();
+  const m = String(ist.getMinutes()).padStart(2, "0");
+  const ampm = h < 12 ? "AM" : "PM";
+  const hh = String(((h + 11) % 12) + 1).padStart(2, "0");
+
+  let greeting;
+  if (h >= 5 && h < 12) greeting = "Good morning";
+  else if (h >= 12 && h < 17) greeting = "Good afternoon";
+  else if (h >= 17 && h < 21) greeting = "Good evening";
+  else greeting = "Burning the midnight oil";
+
+  let nowLine;
+  if (h >= 5 && h < 9) nowLine = "On the first coffee";
+  else if (h >= 9 && h < 12) nowLine = "Deep in mock-ups";
+  else if (h >= 12 && h < 14) nowLine = "On lunch break";
+  else if (h >= 14 && h < 18) nowLine = "In review mode";
+  else if (h >= 18 && h < 21) nowLine = "Wrapping up";
+  else if (h >= 21 || h < 1) nowLine = "Wandering Figma";
+  else nowLine = "Sleeping, probably";
+
+  return { time: `${hh}:${m} ${ampm}`, greeting, now: nowLine };
 }
 
 Object.assign(window, { Hero });
@@ -1497,15 +1755,20 @@ Object.assign(window, { Collage });
 
 <!-- ── Contact + Footer ───────────────────────────────────────── -->
 <script type="text/babel">
-const { useState: useStateCt } = React;
+const { useState: useStateCt, useEffect: useEffectCt } = React;
 
 function Contact() {
-  const [form, setForm] = useStateCt({ name: "", email: "", note: "" });
+  const [note, setNote] = useStateCt("");
   const [sent, setSent] = useStateCt(false);
+  const [bangaloreTime, setBangaloreTime] = useStateCt(() => formatBangaloreTime());
+  useEffectCt(() => {
+    const id = setInterval(() => setBangaloreTime(formatBangaloreTime()), 30 * 1000);
+    return () => clearInterval(id);
+  }, []);
   const onSubmit = (e) => {
     e.preventDefault();
-    const subj = encodeURIComponent(`Portfolio enquiry — ${form.name || "Hello Adi"}`);
-    const body = encodeURIComponent(`${form.note}\n\n— ${form.name}\n${form.email}`);
+    const subj = encodeURIComponent("Portfolio — let's talk");
+    const body = encodeURIComponent(note + "\n\n— via adiuixux.com");
     window.location.href = `mailto:Aditya.shukla2903@gmail.com?subject=${subj}&body=${body}`;
     setSent(true);
   };
@@ -1517,56 +1780,100 @@ function Contact() {
           <span className="num">§ 04 / Contact</span>
           <h2>Say hello</h2>
         </div>
-        <div className="meta"><div>Bangalore · UTC+5:30 · Replies in 24h</div></div>
+        <div className="meta"><div>Replies within 24h · usually faster</div></div>
       </div>
 
       <div className="contact">
+        {/* 1. Lead */}
         <h3 className="contact-lead">
-          Let's make<br />
-          something<br />
-          <span className="serif">worth</span> <span className="underline">paying attention</span><br />
-          to.
+          Let's make <br />
+          <span className="accent">something</span><br />
+          <span className="serif">worth</span> the attention.
         </h3>
 
-        <div className="contact-card">
-          <div className="row">
-            <span className="k">Email</span>
-            <a className="v" href="mailto:Aditya.shukla2903@gmail.com">
-              <span>Aditya.shukla2903@gmail.com</span>
-              <span className="arrow">↗</span>
-            </a>
+        {/* 2. Status strip */}
+        <div className="contact-status" role="group" aria-label="Availability">
+          <div className="pair">
+            <span className="k">Status</span>
+            <span className="v"><span className="status-pulse" aria-hidden="true"></span>Open · Q3 '26</span>
           </div>
-          <div className="row">
-            <span className="k">Phone</span>
-            <a className="v" href="tel:+919113676858">
-              <span>+91 91136 76858</span>
-              <span className="arrow">↗</span>
-            </a>
+          <div className="pair">
+            <span className="k">Bangalore</span>
+            <span className="v">{bangaloreTime}</span>
           </div>
-          <div className="row">
-            <span className="k">LinkedIn</span>
-            <a className="v" href="https://www.linkedin.com/in/aditya-s-74995627a"
-               target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-              <span className="li-logo" aria-hidden="true">in</span>
-              <span>/aditya-s</span>
-              <span className="arrow">↗</span>
-            </a>
+          <div className="pair">
+            <span className="k">Working on</span>
+            <span className="v">Service-design pilot</span>
           </div>
-          <form className="form" onSubmit={onSubmit} aria-label="Contact form">
-            <input type="text" placeholder="Your name" value={form.name}
-                   onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-            <input type="email" placeholder="Email" value={form.email}
-                   onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-            <textarea rows={3} placeholder="What are you working on?" value={form.note}
-                      onChange={(e) => setForm({ ...form, note: e.target.value })} required />
-            <button type="submit" className="cta submit">
-              <span>{sent ? "Sent — check your mail" : "Send →"}</span>
-            </button>
-          </form>
+          <div className="pair">
+            <span className="k">Available for</span>
+            <span className="v">Lead · Strategy · 0→1</span>
+          </div>
         </div>
+
+        {/* 3. Three method tiles */}
+        <div className="contact-methods">
+          <a className="method-tile" href="mailto:Aditya.shukla2903@gmail.com">
+            <div className="tile-head">
+              <span className="k">Email</span>
+              <span className="arrow" aria-hidden="true">↗</span>
+            </div>
+            <div className="tile-value">Aditya.shukla2903@gmail.com</div>
+            <div className="tile-meta">Best for project briefs</div>
+          </a>
+          <a className="method-tile" href="tel:+919113676858">
+            <div className="tile-head">
+              <span className="k">Phone</span>
+              <span className="arrow" aria-hidden="true">↗</span>
+            </div>
+            <div className="tile-value">+91 91136 76858</div>
+            <div className="tile-meta">IST · 10am – 7pm</div>
+          </a>
+          <a className="method-tile"
+             href="https://www.linkedin.com/in/aditya-s-74995627a"
+             target="_blank" rel="noopener noreferrer">
+            <div className="tile-head">
+              <span className="k">LinkedIn</span>
+              <span className="arrow" aria-hidden="true">↗</span>
+            </div>
+            <div className="tile-value">/aditya-s</div>
+            <div className="tile-meta">Slower, still listening</div>
+          </a>
+        </div>
+
+        {/* 4. Minimal inline note form */}
+        <form className="contact-note" onSubmit={onSubmit} aria-label="Quick note">
+          <div>
+            <label htmlFor="cn-note" className="note-label">Or, in one line —</label>
+            <textarea
+              id="cn-note"
+              rows={1}
+              placeholder="What are you working on?"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit" className="submit" disabled={!note.trim() && !sent}>
+            <span>{sent ? "Sent" : "Send note"}</span>
+            <span className="arrow" aria-hidden="true">→</span>
+          </button>
+        </form>
       </div>
     </section>
   );
+}
+
+function formatBangaloreTime() {
+  // IST is UTC+5:30 — derive from current Date regardless of viewer timezone.
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const ist = new Date(utc + (5.5 * 60 * 60 * 1000));
+  const h = ist.getHours();
+  const m = String(ist.getMinutes()).padStart(2, "0");
+  const ampm = h < 12 ? "AM" : "PM";
+  const hh = String(((h + 11) % 12) + 1).padStart(2, "0");
+  return `${hh}:${m} ${ampm}`;
 }
 
 function Footer() {
@@ -1576,8 +1883,8 @@ function Footer() {
         <div className="wm">
           ADI<span style={{ display: "inline-block", width: "0.18em", height: "0.18em", background: "currentColor", marginLeft: "0.06em", marginRight: "0.04em", verticalAlign: "0.18em" }}></span>UIXUX
         </div>
-        <div style={{ color: "var(--muted)", maxWidth: "36ch", fontSize: 13 }}>
-          Independent product &amp; systems designer. Strategy-first. Pixel-stubborn. Currently in Bangalore.
+        <div style={{ color: "var(--muted)", maxWidth: "36ch", fontSize: 14, lineHeight: 1.55 }}>
+          Independent product &amp; systems designer. Strategy-first. Pixel-stubborn. Currently in Bangalore — open to remote &amp; on-site work.
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
           <a href="https://www.linkedin.com/in/aditya-s-74995627a" target="_blank" rel="noopener noreferrer"
@@ -1595,21 +1902,23 @@ function Footer() {
         <a href="#contact">Contact</a>
       </div>
       <div className="col">
-        <span className="hd">Working on</span>
-        <span>Service design pilot</span>
-        <span>A type specimen</span>
-        <span>Public writing, slowly</span>
+        <span className="hd">Currently</span>
+        <span>Reading · <em style={{ fontFamily: "var(--font-display)", fontStyle: "italic" }}>The Design of Everyday Things</em></span>
+        <span>Listening · Nils Frahm</span>
+        <span>Obsessed with · Service blueprints</span>
+        <span>Side quest · A type specimen</span>
       </div>
       <div className="col">
         <span className="hd">Elsewhere</span>
         <a href="https://www.linkedin.com/in/aditya-s-74995627a" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
         <a href="mailto:Aditya.shukla2903@gmail.com">Email ↗</a>
         <a href="tel:+919113676858">Phone ↗</a>
+        <a href="#contact">Get in touch ↗</a>
       </div>
       <div className="footer-bottom">
         <span>© 2026 · Adi · Bangalore</span>
-        <span>Last updated · May 2026</span>
-        <span>Built by hand · no templates</span>
+        <span>v2026.05.13 · hand-written, no templates</span>
+        <span><span className="status-dot" style={{ marginRight: 6 }}></span>System OK</span>
       </div>
     </footer>
   );
@@ -1718,6 +2027,34 @@ const DEFAULTS = {
   showOnboarding: true,
 };
 
+/* Marquee — a continuously-scrolling editorial strip that lives between
+   sections. Duplicates its children so the loop is seamless. Pauses on hover. */
+function Marquee() {
+  const ITEMS = [
+    "Selected work, below",
+    "Three projects",
+    "Designed in Bangalore",
+    "Open for Q3 '26",
+    "Designing since 2019",
+    "Strategy first",
+    "Pixel-stubborn second",
+    "Product · Systems · Experience",
+  ];
+  return (
+    <aside className="marquee" aria-hidden="true">
+      <div className="marquee-track">
+        {[...ITEMS, ...ITEMS, ...ITEMS].map((t, i) => (
+          <span key={i} className="marquee-item">
+            <span className="dot">●</span>
+            <span>{t}</span>
+          </span>
+        ))}
+      </div>
+    </aside>
+  );
+}
+Object.assign(window, { Marquee });
+
 function App() {
   const [tweaks, setTweak] = window.useTweaks(DEFAULTS);
   const { theme, mode, cycle } = window.useTheme(tweaks.themeMode);
@@ -1759,6 +2096,7 @@ function App() {
 
       <main>
         <_Hero animation={tweaks.heroAnimation} />
+        <Marquee />
         <_Work />
         <_Collage />
         <_Contact />
