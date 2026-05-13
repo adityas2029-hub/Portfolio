@@ -233,6 +233,16 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .cta:hover .arrow { transform: translateX(4px); color: var(--accent); }
 .cta:hover { border-color: var(--accent); }
 
+/* On the orange contact section the regular CTA becomes invisible
+   (accent-on-accent). Re-skin it to ink-on-orange so it reads. */
+.topnav.on-accent .cta { border-color: var(--accent-ink); color: var(--accent-ink); }
+.topnav.on-accent .cta .dot { background: var(--accent-ink); animation: none; }
+.topnav.on-accent .cta .cta-text .b { color: var(--bg); }
+.topnav.on-accent .cta:hover { border-color: var(--accent-ink); background: var(--accent-ink); color: var(--bg); }
+.topnav.on-accent .cta:hover .cta-text .a,
+.topnav.on-accent .cta:hover .cta-text .b { color: var(--bg); }
+.topnav.on-accent .cta:hover .arrow { color: var(--bg); }
+
 /* ============================================================
    SIDE PROGRESS RAIL
    ============================================================ */
@@ -346,13 +356,16 @@ section {
   overflow: hidden;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  padding: clamp(16px, 1.8vw, 22px) 0;
   background: var(--bg);
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
           mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+  /* Symmetric vertical breathing room — items sit visually centered between
+     the top and bottom borders rather than hugging the top */
+  display: flex; align-items: center;
+  min-height: clamp(56px, 5vw, 72px);
 }
 .marquee-track {
-  display: inline-flex; flex-wrap: nowrap; gap: 48px;
+  display: inline-flex; align-items: center; flex-wrap: nowrap; gap: 48px;
   white-space: nowrap; width: max-content;
   animation: marquee-scroll 60s linear infinite;
   will-change: transform;
@@ -513,7 +526,19 @@ section {
   padding: clamp(28px, 4vw, 44px) clamp(20px, 2vw, 32px) clamp(28px, 4vw, 44px) clamp(20px, 2vw, 32px);
   border-top: 1px solid var(--line);
   position: relative; cursor: pointer;
-  transition: padding 420ms cubic-bezier(0.2, 0.7, 0.2, 1), background 420ms ease;
+  /* Subtle entrance — barely a blur, just a quiet "settling" feel that reads
+     as professional rather than gimmicky. IntersectionObserver adds .in. */
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    padding 420ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    background 420ms ease,
+    opacity 800ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 800ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.case.in { opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .case { opacity: 1; transform: none; transition: padding 420ms ease, background 420ms ease; }
 }
 /* Layer 1: full-width accent overlay that sweeps in from left */
 .case::before {
@@ -569,9 +594,10 @@ section {
   transition: transform 620ms cubic-bezier(0.2, 0.7, 0.2, 1), filter 420ms ease;
   transform-origin: center;
 }
-.case .case-thumb img {
+.case .case-thumb img,
+.case .case-thumb > svg {
   position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; display: block;
+  display: block; object-fit: cover;
   transition: transform 800ms cubic-bezier(0.2, 0.7, 0.2, 1), filter 420ms ease;
 }
 /* Stripe pattern — only when there's no cover image */
@@ -591,7 +617,8 @@ section {
   pointer-events: none;
 }
 .case:hover .case-thumb { filter: contrast(1.04); }
-.case:hover .case-thumb img { transform: scale(1.045); }
+.case:hover .case-thumb img,
+.case:hover .case-thumb > svg { transform: scale(1.045); }
 .case:hover .case-thumb::after { opacity: 1; }
 [data-theme="dark"] .case .case-thumb:not(.has-image)::before {
   background-image: repeating-linear-gradient(45deg, transparent 0 8px, rgba(255,255,255,0.06) 8px 9px);
@@ -658,7 +685,64 @@ section {
 .collage-track.dragging { cursor: grabbing; scroll-snap-type: none; }
 .collage-track::-webkit-scrollbar { display: none; }
 
-/* --- Grid view --- */
+/* --- Brand marquee: 3 vertical auto-scrolling columns ---
+   - Default view. Total height ~140vh, so the user moves past it in ~2 scrolls.
+   - Each column animates Y from 0 to -50% (items are duplicated 1:1) so the
+     loop is seamless. Three different durations create a subtle parallax —
+     the eye can rest on any column without all three resetting together.
+   - Soft mask on top + bottom edges hides the loop seams visually. */
+.brand-marquee {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(16px, 2vw, 28px);
+  height: clamp(720px, 140vh, 1400px);
+  overflow: hidden;
+  position: relative;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+          mask-image: linear-gradient(180deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+}
+.brand-col {
+  display: flex; flex-direction: column;
+  gap: clamp(16px, 2vw, 28px);
+  will-change: transform, opacity;
+  opacity: 0;
+  transform: translateY(40px);
+}
+/* Animations only kick in when the section is observed in view ('.armed'),
+   so the entrance lands as the user reaches the brand section, not on page load. */
+.brand-marquee.armed .brand-col {
+  animation:
+    brand-enter 900ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards,
+    brand-vscroll 56s linear infinite;
+}
+.brand-marquee.armed .brand-col.col-1 { animation-delay: 0ms, 900ms; animation-duration: 900ms, 56s; }
+.brand-marquee.armed .brand-col.col-2 { animation-delay: 140ms, 1100ms; animation-duration: 900ms, 72s; }
+.brand-marquee.armed .brand-col.col-3 { animation-delay: 280ms, 1280ms; animation-duration: 900ms, 48s; }
+
+.brand-marquee:hover .brand-col {
+  animation-play-state: paused;
+}
+
+@keyframes brand-vscroll {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-50%); }
+}
+@keyframes brand-enter {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.brand-card {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 4 / 5;
+  flex-shrink: 0;
+  /* Brand cards are pre-revealed (column-level enter animation handles it) */
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Strip view fallback grid (when no auto-scroll is wanted) */
 .collage-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -956,6 +1040,92 @@ section {
 }
 .bubble.from-top::before { top: -4px; left: 18px; }
 .bubble.from-left::before { left: -4px; top: 18px; }
+
+/* ============================================================
+   EASTER EGGS + MICRO-ANIMATIONS
+   ============================================================ */
+/* Konami toast — bottom-left, mono type, fades in/out */
+.konami-toast {
+  position: fixed; left: clamp(20px, 3vw, 36px);
+  bottom: clamp(20px, 3vw, 36px); z-index: 90;
+  display: inline-flex; align-items: center; gap: 12px;
+  padding: 10px 16px;
+  background: var(--fg); color: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.08em;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity 320ms ease, transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  pointer-events: none;
+  max-width: 360px;
+}
+.konami-toast.show { opacity: 1; transform: translateY(0); }
+.konami-toast .dot {
+  color: var(--accent); font-size: 9px;
+  animation: pulse 2.4s infinite;
+}
+.konami-toast em {
+  font-family: var(--font-display); font-style: italic;
+  font-size: 1.2em; color: var(--accent);
+}
+
+/* Logo-mark — micro-wiggle on hover (subtle "alive" cue) */
+.logo:hover .logo-mark span {
+  display: inline-block;
+  animation: wiggle 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0); }
+  30%      { transform: rotate(-12deg); }
+  60%      { transform: rotate(8deg); }
+  80%      { transform: rotate(-3deg); }
+}
+
+/* Hero period — pulses outward on hover, a small ripple of accent */
+.intro-text .period {
+  position: relative; cursor: pointer;
+}
+.intro-text .period::after {
+  content: ""; position: absolute;
+  inset: -4px; border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  opacity: 0; transform: scale(0.6);
+  pointer-events: none;
+}
+.intro-text .period:hover::after {
+  animation: period-ping 900ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@keyframes period-ping {
+  0%   { opacity: 0.9; transform: scale(0.6); }
+  100% { opacity: 0;   transform: scale(2.4); }
+}
+
+/* ============================================================
+   SCROLL-TO-TOP — bottom-right pill, fades in after the fold
+   ============================================================ */
+.scroll-top {
+  position: fixed; right: clamp(20px, 3vw, 36px);
+  bottom: clamp(20px, 3vw, 36px);
+  z-index: 80;
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border: 1.5px solid var(--fg);
+  background: var(--bg); color: var(--fg);
+  border-radius: 50%;
+  opacity: 0; transform: translateY(8px) scale(0.92);
+  pointer-events: none;
+  transition: opacity 320ms ease, transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1),
+              background 220ms ease, color 220ms ease;
+}
+.scroll-top.shown { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.scroll-top:hover { background: var(--fg); color: var(--bg); }
+.scroll-top svg { width: 14px; height: 14px; }
+/* Tiny breathing pulse — only on hover, so it doesn't compete with the
+   pulse dot on the CTA */
+.scroll-top:hover svg { animation: top-bob 1.4s ease-in-out infinite; }
+@keyframes top-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
+}
 
 /* ============================================================
    FLOATING CURSOR — pursuit ring + small dot
@@ -1655,12 +1825,6 @@ Object.assign(window, { Hero });
 <script type="text/babel">
 const { useRef: useRefWork, useEffect: useEffectWork } = React;
 
-/* Image URLs use Unsplash's stable CDN with photo IDs.
-   Width/quality params keep them lean; auto=format serves AVIF/WebP where supported.
-   If a photo ever 404s, the <img onError> handler in the JSX swaps to the SVG fallback. */
-const UN = (id, w = 1600) =>
-  `https://images.unsplash.com/photo-${id}?w=${w}&q=80&auto=format&fit=crop`;
-
 const CASE_STUDIES = [
   {
     id: "cs-01", num: "C/01",
@@ -1670,8 +1834,7 @@ const CASE_STUDIES = [
     sub: "A dating product built around sensory load, communication style and consent — not just swipes. Research-led, made with the people it's for.",
     tags: ["Consumer", "Research-led", "Inclusive", "iOS"],
     year: "2025", duration: "6 months",
-    /* Soft warm scene — intimate, calm, paper-and-light feel */
-    cover: UN("1516589178581-6cd7833ae3b2"),
+    mockup: "dating",
   },
   {
     id: "cs-02", num: "C/02",
@@ -1681,8 +1844,7 @@ const CASE_STUDIES = [
     sub: "Re-routing how a 12M-person city chooses between transit, ride-share and personal mobility. A platform problem dressed up as a UI.",
     tags: ["GovTech", "Service design", "Strategy", "Multi-modal"],
     year: "2024", duration: "9 months",
-    /* Long-exposure city traffic — movement, scale, multimodal */
-    cover: UN("1503376780353-7e6692767b70"),
+    mockup: "mobility",
   },
   {
     id: "cs-03", num: "C/03",
@@ -1692,8 +1854,7 @@ const CASE_STUDIES = [
     sub: "An internal tool that trimmed 22% off prep-to-plate. A masterclass in designing for people who really don't want to be designed for.",
     tags: ["B2B", "Operations", "Design system", "Web"],
     year: "2023", duration: "12 months",
-    /* Professional kitchen — operations, hands, craft */
-    cover: UN("1556909114-44e3e9395a30"),
+    mockup: "foodops",
   },
 ];
 
@@ -1735,19 +1896,8 @@ function Work() {
                 {c.tags.map((t) => <span key={t} className="tag">{t}</span>)}
               </div>
             </div>
-            <div className={`case-thumb${c.cover ? " has-image" : ""}`}>
-              {c.cover && (
-                <img
-                  src={c.cover}
-                  alt={c.title}
-                  loading="lazy"
-                  onError={(e) => {
-                    // Cover failed to load — drop it and let the placeholder stripe show
-                    e.currentTarget.style.display = "none";
-                    e.currentTarget.parentElement.classList.remove("has-image");
-                  }}
-                />
-              )}
+            <div className={`case-thumb${c.mockup ? " has-image" : ""}`}>
+              {c.mockup && <CaseMockup variant={c.mockup} />}
               <span className="corner tl"></span>
               <span className="corner tr"></span>
               <span className="corner bl"></span>
@@ -1772,38 +1922,194 @@ Object.assign(window, { Work });
 <script type="text/babel">
 const { useRef: useRefCol, useEffect: useEffectCol, useState: useStateCol } = React;
 
-const UN_C = (id, w = 800) =>
-  `https://images.unsplash.com/photo-${id}?w=${w}&q=80&auto=format&fit=crop`;
-
-/* Each entry maps to a real Unsplash photo whose mood matches the project's
-   discipline (Identity / Poster / Wayfinding / Editorial / Type / etc.).
-   The img URLs are the primary; the SVG `swatch` is the onError fallback. */
+/* Brand portfolio items. Each one renders as a brutalist mono SVG (ArtSwatch)
+   so the section reads as a coherent gallery — consistent palette, consistent
+   visual language, no remote image dependency. Swap any of these for real
+   covers later by adding an `img` field; CollageThumb prefers it when set. */
 const COLLAGE = [
-  { id: "b1",  name: "Kintsugi Studios",  cat: "Identity",    year: "25", w: 420, h: 540, swatch: "art-1",
-    img: UN_C("1545239351-1141bd82e8a6") },
-  { id: "b2",  name: "Halt & Heat",       cat: "Poster",      year: "25", w: 320, h: 460, swatch: "art-2",
-    img: UN_C("1547891654-e66ed7ebb968") },
-  { id: "b3",  name: "Open Routes",       cat: "Wayfinding",  year: "24", w: 540, h: 460, swatch: "art-3",
-    img: UN_C("1565299507177-b0ac66763828") },
-  { id: "b4",  name: "Folio No. 04",      cat: "Editorial",   year: "24", w: 360, h: 460, swatch: "art-4",
-    img: UN_C("1456513080510-7bf3a84b82f8") },
-  { id: "b5",  name: "Field Recordings",  cat: "Identity",    year: "24", w: 420, h: 540, swatch: "art-5",
-    img: UN_C("1517336714731-489689fd1ca8") },
-  { id: "b6",  name: "MNML / 03",         cat: "Poster",      year: "23", w: 320, h: 460, swatch: "art-6",
-    img: UN_C("1611339555312-e607c8352fd7") },
-  { id: "b7",  name: "Loop Bicycle Co.",  cat: "Logo system", year: "23", w: 480, h: 460, swatch: "art-7",
-    img: UN_C("1502744688674-c619d1586c9e") },
-  { id: "b8",  name: "Wreckage Bureau",   cat: "Editorial",   year: "23", w: 360, h: 540, swatch: "art-8",
-    img: UN_C("1497633762265-9d179a990aa6") },
-  { id: "b9",  name: "Type Specimen / A", cat: "Type design", year: "23", w: 420, h: 460, swatch: "art-9",
-    img: UN_C("1531913764164-f85c52e6e654") },
-  { id: "b10", name: "Quiet Hours",       cat: "Poster",      year: "22", w: 320, h: 460, swatch: "art-10",
-    img: UN_C("1493663284031-b7e3aefcae8e") },
-  { id: "b11", name: "City of Tomorrow",  cat: "Campaign",    year: "22", w: 540, h: 460, swatch: "art-11",
-    img: UN_C("1485827404703-89b55fcc595e") },
-  { id: "b12", name: "ATELIER — MK",      cat: "Identity",    year: "22", w: 380, h: 540, swatch: "art-12",
-    img: UN_C("1556761175-5973dc0f32e7") },
+  { id: "b1",  name: "Kintsugi Studios",  cat: "Identity",    year: "25", w: 420, h: 540, swatch: "art-1"  },
+  { id: "b2",  name: "Halt & Heat",       cat: "Poster",      year: "25", w: 320, h: 460, swatch: "art-2"  },
+  { id: "b3",  name: "Open Routes",       cat: "Wayfinding",  year: "24", w: 540, h: 460, swatch: "art-3"  },
+  { id: "b4",  name: "Folio No. 04",      cat: "Editorial",   year: "24", w: 360, h: 460, swatch: "art-4"  },
+  { id: "b5",  name: "Field Recordings",  cat: "Identity",    year: "24", w: 420, h: 540, swatch: "art-5"  },
+  { id: "b6",  name: "MNML / 03",         cat: "Poster",      year: "23", w: 320, h: 460, swatch: "art-6"  },
+  { id: "b7",  name: "Loop Bicycle Co.",  cat: "Logo system", year: "23", w: 480, h: 460, swatch: "art-7"  },
+  { id: "b8",  name: "Wreckage Bureau",   cat: "Editorial",   year: "23", w: 360, h: 540, swatch: "art-8"  },
+  { id: "b9",  name: "Type Specimen / A", cat: "Type design", year: "23", w: 420, h: 460, swatch: "art-9"  },
+  { id: "b10", name: "Quiet Hours",       cat: "Poster",      year: "22", w: 320, h: 460, swatch: "art-10" },
+  { id: "b11", name: "City of Tomorrow",  cat: "Campaign",    year: "22", w: 540, h: 460, swatch: "art-11" },
+  { id: "b12", name: "ATELIER — MK",      cat: "Identity",    year: "22", w: 380, h: 540, swatch: "art-12" },
 ];
+
+/* Inline SVG mockups for case study covers — keeps the page lightweight and
+   guarantees every cover renders, no external fetches. Each mockup hints at the
+   project's discipline (mobile UI / mobility map / ops dashboard) and reuses the
+   brand palette so the covers feel of the same world as the rest of the page. */
+function CaseMockup({ variant }) {
+  const C = {
+    bg: "var(--bg-2)",
+    ink: "var(--fg)",
+    muted: "var(--muted)",
+    line: "rgba(22,18,14,0.18)",
+    accent: "var(--accent)",
+  };
+  const common = { width: "100%", height: "100%", viewBox: "0 0 800 500", preserveAspectRatio: "xMidYMid slice" };
+  if (variant === "dating") {
+    // A phone-card mockup — soft conversational UI with chat bubbles + a 'matched' chip
+    return (
+      <svg {...common}>
+        <rect width="800" height="500" fill={C.bg} />
+        {/* phone frame */}
+        <rect x="260" y="60" rx="36" ry="36" width="280" height="500" fill="var(--bg)" stroke={C.line} strokeWidth="2" />
+        {/* status bar */}
+        <line x1="290" y1="100" x2="510" y2="100" stroke={C.line} />
+        <circle cx="400" cy="92" r="3" fill={C.muted} />
+        {/* header */}
+        <text x="300" y="142" fontFamily="Inter, system-ui" fontWeight="600" fontSize="18" fill={C.ink}>Today</text>
+        <text x="300" y="162" fontFamily="JetBrains Mono, monospace" fontSize="10" letterSpacing="0.12em" fill={C.muted}>3 NEW THREADS</text>
+        {/* match chip */}
+        <rect x="295" y="190" width="210" height="44" rx="22" fill={C.ink} />
+        <circle cx="319" cy="212" r="14" fill={C.accent} />
+        <text x="346" y="218" fontFamily="Inter, system-ui" fontSize="13" fontWeight="500" fill={C.bg}>Matched with Sam</text>
+        {/* card stack — three rounded rectangles */}
+        <rect x="295" y="252" width="210" height="78" rx="12" fill="var(--bg)" stroke={C.line} />
+        <text x="312" y="278" fontFamily="Inter, system-ui" fontSize="12" fontWeight="500" fill={C.ink}>Quiet evenings · books</text>
+        <text x="312" y="296" fontFamily="Inter, system-ui" fontSize="11" fill={C.muted}>"prefer typed-first, voice later"</text>
+        <line x1="312" y1="312" x2="488" y2="312" stroke={C.line} />
+        <text x="312" y="324" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="0.1em" fill={C.muted}>SENSORY: LOW · COMM: ASYNC</text>
+
+        <rect x="295" y="346" width="210" height="78" rx="12" fill="var(--bg)" stroke={C.line} />
+        <text x="312" y="372" fontFamily="Inter, system-ui" fontSize="12" fontWeight="500" fill={C.ink}>Walking tour, no plans</text>
+        <text x="312" y="390" fontFamily="Inter, system-ui" fontSize="11" fill={C.muted}>"happy to sit in silence"</text>
+        <line x1="312" y1="406" x2="488" y2="406" stroke={C.line} />
+        <text x="312" y="418" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="0.1em" fill={C.muted}>SENSORY: MED · COMM: MIXED</text>
+
+        <rect x="295" y="440" width="210" height="78" rx="12" fill="var(--bg)" stroke={C.line} />
+        <circle cx="318" cy="478" r="10" fill={C.accent} fillOpacity="0.18" />
+        <circle cx="318" cy="478" r="4" fill={C.accent} />
+        <text x="338" y="476" fontFamily="Inter, system-ui" fontSize="12" fontWeight="500" fill={C.ink}>Consent settings</text>
+        <text x="338" y="492" fontFamily="Inter, system-ui" fontSize="11" fill={C.muted}>Set boundaries before first chat</text>
+
+        {/* side label */}
+        <text x="56" y="76" fontFamily="JetBrains Mono, monospace" fontSize="10" letterSpacing="0.18em" fill={C.muted}>C/01 · CONSUMER · IOS</text>
+        <text x="56" y="430" fontFamily="Inter, system-ui" fontSize="48" fontWeight="500" letterSpacing="-0.03em" fill={C.ink}>Dating, with care.</text>
+        <text x="56" y="458" fontFamily="JetBrains Mono, monospace" fontSize="11" letterSpacing="0.1em" fill={C.muted}>SENSORY · COMMS · CONSENT</text>
+      </svg>
+    );
+  }
+  if (variant === "mobility") {
+    // A transit map mockup — nodes, routes, mode-toggle chips
+    return (
+      <svg {...common}>
+        <rect width="800" height="500" fill={C.bg} />
+        {/* map area */}
+        <rect x="40" y="40" width="500" height="420" fill="var(--bg)" stroke={C.line} />
+        {/* faint grid */}
+        {[...Array(10)].map((_, i) => (
+          <line key={`v${i}`} x1={40 + i * 50} y1="40" x2={40 + i * 50} y2="460" stroke={C.line} strokeWidth="0.5" />
+        ))}
+        {[...Array(9)].map((_, i) => (
+          <line key={`h${i}`} x1="40" y1={40 + i * 47} x2="540" y2={40 + i * 47} stroke={C.line} strokeWidth="0.5" />
+        ))}
+        {/* primary route — bold */}
+        <polyline points="90,400 180,360 240,300 320,250 360,180 460,140 510,90"
+                  fill="none" stroke={C.ink} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
+        {/* secondary route */}
+        <polyline points="90,400 200,400 280,350 380,300 460,260 510,180"
+                  fill="none" stroke={C.muted} strokeWidth="2" strokeDasharray="6 4" />
+        {/* accent route */}
+        <polyline points="90,400 130,300 200,260 280,200 360,140 460,100"
+                  fill="none" stroke={C.accent} strokeWidth="2.5" />
+        {/* nodes */}
+        {[[90,400],[180,360],[240,300],[320,250],[360,180],[460,140],[510,90]].map((p,i) => (
+          <circle key={i} cx={p[0]} cy={p[1]} r="5" fill="var(--bg)" stroke={C.ink} strokeWidth="2" />
+        ))}
+        <circle cx="510" cy="90" r="9" fill={C.accent} />
+        <text x="525" y="94" fontFamily="JetBrains Mono, monospace" fontSize="10" fontWeight="600" fill={C.ink}>HOME</text>
+
+        {/* side panel */}
+        <rect x="560" y="40" width="200" height="420" fill="var(--bg)" stroke={C.line} />
+        <text x="580" y="80" fontFamily="JetBrains Mono, monospace" fontSize="10" letterSpacing="0.16em" fill={C.muted}>ROUTES · MULTIMODAL</text>
+        {/* mode chips */}
+        <rect x="580" y="100" width="68" height="26" rx="4" fill={C.ink} />
+        <text x="592" y="118" fontFamily="JetBrains Mono, monospace" fontSize="10" fontWeight="600" fill={C.bg}>METRO</text>
+        <rect x="654" y="100" width="50" height="26" rx="4" fill="var(--bg)" stroke={C.line} />
+        <text x="664" y="118" fontFamily="JetBrains Mono, monospace" fontSize="10" fill={C.muted}>BUS</text>
+        <rect x="580" y="134" width="58" height="26" rx="4" fill="var(--bg)" stroke={C.line} />
+        <text x="592" y="152" fontFamily="JetBrains Mono, monospace" fontSize="10" fill={C.muted}>RIDE</text>
+        <rect x="646" y="134" width="68" height="26" rx="4" fill="var(--bg)" stroke={C.line} />
+        <text x="658" y="152" fontFamily="JetBrains Mono, monospace" fontSize="10" fill={C.muted}>BIKE</text>
+
+        {/* result rows */}
+        <text x="580" y="200" fontFamily="Inter, system-ui" fontSize="13" fontWeight="600" fill={C.ink}>42 min</text>
+        <text x="580" y="218" fontFamily="Inter, system-ui" fontSize="11" fill={C.muted}>Metro + 6 min walk</text>
+        <line x1="580" y1="234" x2="740" y2="234" stroke={C.line} />
+
+        <text x="580" y="262" fontFamily="Inter, system-ui" fontSize="13" fontWeight="600" fill={C.accent}>38 min · ↑</text>
+        <text x="580" y="280" fontFamily="Inter, system-ui" fontSize="11" fill={C.muted}>Bike + Metro</text>
+        <line x1="580" y1="296" x2="740" y2="296" stroke={C.line} />
+
+        <text x="580" y="324" fontFamily="Inter, system-ui" fontSize="13" fontWeight="600" fill={C.ink}>56 min</text>
+        <text x="580" y="342" fontFamily="Inter, system-ui" fontSize="11" fill={C.muted}>Bus only</text>
+
+        <text x="580" y="430" fontFamily="JetBrains Mono, monospace" fontSize="9" letterSpacing="0.12em" fill={C.muted}>12M PEOPLE · 4 MODES</text>
+      </svg>
+    );
+  }
+  if (variant === "foodops") {
+    // An ops dashboard mockup — kitchen prep queue + status indicators
+    return (
+      <svg {...common}>
+        <rect width="800" height="500" fill={C.bg} />
+        {/* top strip */}
+        <rect x="40" y="40" width="720" height="50" fill="var(--bg)" stroke={C.line} />
+        <text x="60" y="72" fontFamily="JetBrains Mono, monospace" fontSize="11" letterSpacing="0.18em" fill={C.muted}>OPS · KITCHEN 3 · LIVE</text>
+        <circle cx="240" cy="65" r="4" fill={C.accent} />
+        <text x="252" y="69" fontFamily="JetBrains Mono, monospace" fontSize="10" fill={C.accent} fontWeight="600">REAL-TIME</text>
+
+        <text x="720" y="72" fontFamily="JetBrains Mono, monospace" fontSize="11" textAnchor="end" fill={C.ink}>22% ↓ PREP→PLATE</text>
+
+        {/* kanban columns */}
+        {[
+          { x: 40,  title: "INCOMING", count: "8" },
+          { x: 200, title: "PREP",     count: "5" },
+          { x: 360, title: "FIRE",     count: "3" },
+          { x: 520, title: "PLATING",  count: "2" },
+        ].map((col, i) => (
+          <g key={i}>
+            <rect x={col.x} y="110" width="140" height="350" fill="var(--bg)" stroke={C.line} />
+            <text x={col.x + 14} y="138" fontFamily="JetBrains Mono, monospace" fontSize="10" fontWeight="600" letterSpacing="0.14em" fill={C.ink}>{col.title}</text>
+            <text x={col.x + 126} y="138" fontFamily="JetBrains Mono, monospace" fontSize="10" textAnchor="end" fill={C.muted}>{col.count}</text>
+            <line x1={col.x + 14} y1="148" x2={col.x + 126} y2="148" stroke={C.line} />
+          </g>
+        ))}
+        {/* tickets */}
+        {[
+          { col: 0, y: 162, t: "Table 4 · 2pax", time: "00:42", st: "ok" },
+          { col: 0, y: 220, t: "Table 12 · 5pax", time: "00:38", st: "ok" },
+          { col: 0, y: 278, t: "Bar · solo", time: "00:25", st: "ok" },
+          { col: 1, y: 162, t: "Table 7 · 4pax", time: "04:12", st: "ok" },
+          { col: 1, y: 220, t: "Table 2 · 3pax", time: "07:54", st: "warn" },
+          { col: 2, y: 162, t: "Table 9 · 2pax", time: "09:21", st: "warn" },
+          { col: 2, y: 220, t: "Counter · solo", time: "11:02", st: "late" },
+          { col: 3, y: 162, t: "Table 6 · 4pax", time: "12:08", st: "ok" },
+        ].map((tk, i) => {
+          const x = 40 + tk.col * 160 + 12;
+          const stColor = tk.st === "late" ? C.accent : tk.st === "warn" ? C.ink : C.muted;
+          return (
+            <g key={i}>
+              <rect x={x} y={tk.y} width="116" height="44" rx="3" fill={C.bg} stroke={C.line} />
+              <text x={x + 10} y={tk.y + 18} fontFamily="Inter, system-ui" fontSize="11" fontWeight="500" fill={C.ink}>{tk.t}</text>
+              <text x={x + 10} y={tk.y + 34} fontFamily="JetBrains Mono, monospace" fontSize="10" fill={stColor}>{tk.time}</text>
+              <circle cx={x + 104} cy={tk.y + 32} r="3" fill={stColor} />
+            </g>
+          );
+        })}
+      </svg>
+    );
+  }
+  return null;
+}
 
 function ArtSwatch({ variant }) {
   const common = { width: "100%", height: "100%", viewBox: "0 0 100 100", preserveAspectRatio: "xMidYMid slice" };
@@ -1846,7 +2152,7 @@ function Collage() {
   const gridRef = useRefCol(null);
   const [progress, setProgress] = useStateCol(0);
   const [paused, setPaused] = useStateCol(false);
-  const [view, setView] = useStateCol("strip"); // 'strip' | 'grid'
+  const [view, setView] = useStateCol("grid"); // 'grid' (default, auto-scrolls) | 'strip'
   const dragState = useRefCol({ active: false, startX: 0, startLeft: 0, moved: 0 });
 
   // Auto-scroll loop only when in strip view
@@ -1910,33 +2216,50 @@ function Collage() {
     };
   }, [view]);
 
-  // Per-view: track scroll progress + reveal-on-scroll for cards.
-  // The IntersectionObserver re-runs when view changes so newly-rendered cards
-  // still animate in (the previous-view cards are unmounted).
+  // Per-view: progress for the strip; "armed" gate for the brand marquee so
+  // the column entrance + vertical auto-scroll only kick in when the brand
+  // section enters the viewport (not on page load, deep above the fold).
   useEffectCol(() => {
-    const container = view === "strip" ? trackRef.current : gridRef.current;
-    if (!container) return undefined;
     const cleanups = [];
+
     if (view === "strip") {
       const el = trackRef.current;
-      const onScroll = () => {
-        const max = el.scrollWidth - el.clientWidth;
-        setProgress(max > 0 ? el.scrollLeft / max : 0);
-      };
-      el.addEventListener("scroll", onScroll, { passive: true });
-      cleanups.push(() => el.removeEventListener("scroll", onScroll));
+      if (el) {
+        const onScroll = () => {
+          const max = el.scrollWidth - el.clientWidth;
+          setProgress(max > 0 ? el.scrollLeft / max : 0);
+        };
+        el.addEventListener("scroll", onScroll, { passive: true });
+        cleanups.push(() => el.removeEventListener("scroll", onScroll));
+      }
+      // Strip-view: per-card fade-up when each scrolls into view.
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            const idx = Number(e.target.getAttribute("data-i") || 0);
+            setTimeout(() => e.target.classList.add("in"), idx * 60);
+            obs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      el?.querySelectorAll(".collage-card").forEach((card) => obs.observe(card));
+      cleanups.push(() => obs.disconnect());
+    } else {
+      // Grid-view: arm the brand marquee when it enters the viewport.
+      const container = gridRef.current;
+      if (container) {
+        const obs = new IntersectionObserver((entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add("armed");
+              obs.unobserve(e.target);
+            }
+          });
+        }, { threshold: 0.1 });
+        obs.observe(container);
+        cleanups.push(() => obs.disconnect());
+      }
     }
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          const idx = Number(e.target.getAttribute("data-i") || 0);
-          setTimeout(() => e.target.classList.add("in"), idx * 60);
-          obs.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.12 });
-    container.querySelectorAll(".collage-card").forEach((card) => obs.observe(card));
-    cleanups.push(() => obs.disconnect());
     return () => cleanups.forEach((c) => c());
   }, [view]);
 
@@ -2007,25 +2330,33 @@ function Collage() {
           </div>
         </div>
       ) : (
-        <div className="collage-grid" ref={gridRef}>
-          {COLLAGE.map((it, i) => (
-            <article key={it.id} className="collage-card" data-i={i}>
-              <div className="thumb">
-                {it.img
-                  ? <img src={it.img} alt={`${it.name} — ${it.cat}`} loading="lazy" />
-                  : <ArtSwatch variant={it.swatch} name={it.name} />}
+        <div className="brand-marquee" ref={gridRef}>
+          {[0, 1, 2].map((colIdx) => {
+            /* Distribute 12 items across 3 columns (4 each) by stride so adjacent
+               columns get visually different mixes (identity / poster / editorial …) */
+            const colItems = COLLAGE.filter((_, i) => i % 3 === colIdx);
+            return (
+              <div key={colIdx} className={`brand-col col-${colIdx + 1}`}>
+                {/* Items duplicated so the keyframe -50% translateY loops seamlessly */}
+                {[...colItems, ...colItems].map((it, j) => (
+                  <article key={`${colIdx}-${j}`} className="collage-card brand-card">
+                    <div className="thumb">
+                      <CollageThumb item={it} />
+                    </div>
+                    <div className="meta">
+                      <span className="name">{it.name}</span>
+                      <span className="yr">{it.cat} · '{it.year}</span>
+                    </div>
+                    <div className="reveal" aria-hidden="true">
+                      <span className="reveal-cat">{it.cat} · {it.year}</span>
+                      <span className="reveal-name">{it.name}</span>
+                      <span className="reveal-arrow">↗</span>
+                    </div>
+                  </article>
+                ))}
               </div>
-              <div className="meta">
-                <span className="name">{it.name}</span>
-                <span className="yr">{it.cat} · '{it.year}</span>
-              </div>
-              <div className="reveal" aria-hidden="true">
-                <span className="reveal-cat">{it.cat} · {it.year}</span>
-                <span className="reveal-name">{it.name}</span>
-                <span className="reveal-arrow">↗</span>
-              </div>
-            </article>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -2333,6 +2664,62 @@ const DEFAULTS = {
      accent zone  → fills with accent (matches the contact section's orange)
      text input   → becomes a vertical "I-beam" bar
    Disabled on touch/coarse-pointer devices via @media (hover:none) in CSS. */
+/* Konami code easter egg — type the classic sequence anywhere on the page
+   to reveal a small mono-typed toast in the bottom-left. Tasteful, not loud:
+   one line, fades after 4s, no confetti. */
+function KonamiEgg() {
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    const SEQ = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+    let buf = [];
+    const onKey = (e) => {
+      // Ignore typing in inputs/textareas — easter eggs shouldn't fight user input.
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      buf.push(e.key);
+      if (buf.length > SEQ.length) buf = buf.slice(-SEQ.length);
+      if (buf.length === SEQ.length && buf.every((k, i) => k.toLowerCase() === SEQ[i].toLowerCase())) {
+        setRevealed(true);
+        buf = [];
+        setTimeout(() => setRevealed(false), 4400);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  return (
+    <div className={`konami-toast ${revealed ? "show" : ""}`} aria-hidden={!revealed}>
+      <span className="dot">●</span>
+      <span>You're paying attention. <em>That's the whole point.</em></span>
+    </div>
+  );
+}
+
+/* Scroll-to-top — appears after scrolling past the hero, smooth-scrolls home. */
+function ScrollTop() {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShown(window.scrollY > window.innerHeight * 0.6);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  const onClick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  return (
+    <button
+      type="button"
+      className={`scroll-top ${shown ? "shown" : ""}`}
+      aria-label="Scroll to top"
+      onClick={onClick}
+    >
+      <span className="scroll-top-progress" aria-hidden="true" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M12 19V5M5 12l7-7 7 7" />
+      </svg>
+    </button>
+  );
+}
+
 function FloatingCursor() {
   const ringRef = useRef(null);
   const dotRef = useRef(null);
@@ -2506,6 +2893,8 @@ function App() {
 
       <_OnboardingBubbles enabled={tweaks.showOnboarding} replayKey={replayOnboard} />
       <FloatingCursor />
+      <ScrollTop />
+      <KonamiEgg />
 
       <TweaksPanel title="Tweaks">
         <TweakSection title="Hero Animation">
