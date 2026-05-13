@@ -906,9 +906,16 @@ section {
 .contact { display: flex; flex-direction: column; gap: clamp(48px, 7vw, 96px); }
 
 .contact-lead {
-  font-family: var(--font-sans); font-size: clamp(44px, 7.5vw, 120px);
-  font-weight: 500; line-height: 0.96; letter-spacing: -0.04em; margin: 0;
-  max-width: 14ch;
+  font-family: var(--font-sans);
+  /* Sized so the longest line ('worth the attention.') fits without
+     forcing a wrap that collapses into the line above it. */
+  font-size: clamp(40px, 6.4vw, 104px);
+  font-weight: 500;
+  /* 1.02 leading prevents lines from physically overlapping at scale */
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  margin: 0;
+  max-width: 16ch;
 }
 .contact-lead .serif {
   font-family: var(--font-display); font-style: italic;
@@ -916,9 +923,15 @@ section {
 }
 /* Word-by-word reveal on viewport entry. Each word's .lh mask hides the
    .accent / .serif spans, then they slide up when the section gets .revealed.
-   Slightly slower stagger than the section-head reveal so it feels deliberate. */
+   Stagger driven by --i. Slightly slower than the section-head reveal so it
+   feels deliberate. */
+.contact-lead-row { display: block; }
 .contact-lead .lh {
-  display: inline-block; overflow: hidden; vertical-align: bottom;
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: baseline;
+  /* a hair of room for descenders ('g' in 'something') so the mask doesn't clip */
+  padding-bottom: 0.06em;
   line-height: inherit;
 }
 .contact-lead .lh > span {
@@ -1102,6 +1115,11 @@ section {
 /* ============================================================
    ONBOARDING BUBBLES
    ============================================================ */
+/* Hide onboarding bubbles on touch/small viewports — they reference hover-only
+   elements (rail, theme toggle) and overflow the screen on phones. */
+@media (max-width: 900px), (hover: none), (pointer: coarse) {
+  .bubble { display: none !important; }
+}
 .bubble {
   position: fixed; background: var(--bubble-bg); color: var(--bubble-fg);
   padding: 10px 14px; font-size: 11px; letter-spacing: 0.04em; z-index: 200;
@@ -1139,9 +1157,18 @@ section {
 /* ============================================================
    SECTION-HEAD LETTER REVEAL — uniform mask-up on viewport entry
    ============================================================ */
+/* Each word is its own inline-block — keeps letters together as a unit so
+   normal text wrap happens BETWEEN words, never INSIDE one. */
+.lr-word {
+  display: inline-block;
+  white-space: nowrap;
+}
 .section-head h2 .lh {
   display: inline-block; overflow: hidden;
-  vertical-align: bottom;
+  /* Vertical-align baseline + a little extra padding so descenders aren't
+     clipped by the overflow:hidden mask. */
+  vertical-align: baseline;
+  padding-bottom: 0.04em;
 }
 .section-head h2 .lh > span {
   display: inline-block;
@@ -1150,13 +1177,101 @@ section {
 }
 section.revealed .section-head h2 .lh > span {
   transform: translateY(0);
-}
-/* Per-letter stagger driven by --i (set in JSX) */
-section.revealed .section-head h2 .lh > span {
   transition-delay: calc(var(--i, 0) * 22ms);
 }
 @media (prefers-reduced-motion: reduce) {
   .section-head h2 .lh > span { transition: none; transform: none; }
+}
+
+/* ============================================================
+   INK TRAIL — click/drag to drop fading accent marks (~2s)
+   ============================================================ */
+.ink-trail {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 3; /* above section bg, below topnav (50) and cursor (9999) */
+}
+.ink-mark {
+  position: absolute;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translate(-50%, -50%) scale(0.5);
+  opacity: 0;
+  /* 2s total: in → linger → out. Easing matches the rest of the site. */
+  animation: ink-fade 2000ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  will-change: transform, opacity;
+  filter: blur(0.4px); /* a hair softer — feels painted, not stamped */
+}
+/* When clicked over the orange contact section, flip to ink so the mark is
+   still visible — the gesture is what matters, not the colour. */
+.ink-mark[data-zone="accent"] { background: var(--accent-ink); }
+
+@keyframes ink-fade {
+  0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  12%  { transform: translate(-50%, -50%) scale(1.0); opacity: 0.85; }
+  55%  { transform: translate(-50%, -50%) scale(1.15); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(1.9); opacity: 0; }
+}
+
+@media (max-width: 900px), (hover: none), (pointer: coarse) {
+  .ink-trail { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ink-mark { animation-duration: 400ms; }
+}
+
+/* ============================================================
+   HERO MINI GAME — small wandering dot, tap-to-score
+   ============================================================ */
+/* The dot is absolutely positioned inside the hero; we drive translate
+   in JS so layout stays still. Stays out of the way of the headline
+   (path constrained to the lower band of the hero). */
+.hero-game-dot {
+  position: absolute; left: 0; top: 0;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 0; padding: 0; margin: 0;
+  cursor: pointer;
+  z-index: 4;
+  box-shadow: 0 0 0 0 rgba(233,75,26,0.45);
+  animation: hg-pulse 2.1s infinite;
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+.hero-game-dot:hover { transform: scale(1.2); }
+.hero-game-dot:active { transform: scale(0.85); }
+@keyframes hg-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(233,75,26,0.45); }
+  70%  { box-shadow: 0 0 0 10px rgba(233,75,26,0); }
+  100% { box-shadow: 0 0 0 0 rgba(233,75,26,0); }
+}
+.hero-game-badge {
+  position: absolute; right: clamp(20px, 4vw, 56px); top: clamp(120px, 12vh, 160px);
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted);
+  z-index: 4;
+  pointer-events: none;
+  display: inline-flex; align-items: center; gap: 8px;
+  opacity: 0.7;
+  transition: opacity 320ms ease;
+}
+.hero-game-badge::before {
+  content: "·";
+  color: var(--accent);
+  font-size: 14px;
+  line-height: 1;
+}
+.hero-game-badge:hover { opacity: 1; }
+.hero-game-badge .done em {
+  font-family: var(--font-display); font-style: italic;
+  font-size: 14px; color: var(--accent);
+  text-transform: none; letter-spacing: -0.005em;
+}
+@media (max-width: 900px), (hover: none), (pointer: coarse) {
+  .hero-game-dot, .hero-game-badge { display: none !important; }
 }
 
 /* ============================================================
@@ -1196,6 +1311,67 @@ section.revealed .section-head h2 .lh > span {
   30%      { transform: rotate(-12deg); }
   60%      { transform: rotate(8deg); }
   80%      { transform: rotate(-3deg); }
+}
+
+/* Footer year-cycle easter egg — click to step through design-history landmarks.
+   Visually identical to the static © line until hovered. */
+.footer-year-egg {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  font: inherit;
+  font-family: var(--font-mono);
+  color: inherit;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: transparent; border: 0; padding: 0; cursor: pointer;
+  position: relative;
+}
+.footer-year-egg .y { font-variant-numeric: tabular-nums; }
+.footer-year-egg .dot { color: var(--muted-2); }
+.footer-year-egg .n {
+  text-transform: none; letter-spacing: 0.02em;
+  color: var(--muted);
+  font-size: 10px;
+}
+.footer-year-egg .hint {
+  position: absolute; top: -2px; right: -14px;
+  font-size: 10px; color: var(--accent);
+  animation: hint-tick 1.8s ease-in-out 2s 3;
+  opacity: 0;
+}
+@keyframes hint-tick {
+  0%, 100% { opacity: 0; transform: rotate(0); }
+  20%      { opacity: 1; transform: rotate(360deg); }
+  80%      { opacity: 1; transform: rotate(360deg); }
+}
+.footer-year-egg:hover .y { color: var(--accent); }
+.footer-year-egg:hover .n { color: var(--fg); }
+
+/* Logo-mark hover tooltip — references Akzidenz-Grotesk (the typeface
+   ancestor of Helvetica, designed 1898). Subtle, only on hover-capable. */
+@media (hover: hover) and (pointer: fine) {
+  .topnav .logo .logo-mark { position: relative; }
+  .topnav .logo .logo-mark::before {
+    content: "Akzidenz, 1898.";
+    position: absolute;
+    left: 50%; top: calc(100% + 10px);
+    transform: translateX(-50%) translateY(-4px);
+    background: var(--fg); color: var(--bg);
+    font-family: var(--font-mono);
+    font-size: 9px; letter-spacing: 0.12em; text-transform: none;
+    padding: 5px 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 320ms ease, transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition-delay: 600ms; /* a beat — feels considered, not noisy */
+  }
+  .topnav .logo .logo-mark:hover::before {
+    opacity: 0.9;
+    transform: translateX(-50%) translateY(0);
+  }
+  .topnav.on-accent .logo .logo-mark::before {
+    background: var(--accent-ink); color: var(--accent);
+  }
 }
 
 /* Hero period — pulses outward on hover, a small ripple of accent */
@@ -1373,11 +1549,47 @@ section:not(#hero).revealed .section-head {
   .contact-note .submit { justify-self: start; }
   .collage-grid { grid-template-columns: 1fr 1fr; }
   .footer { grid-template-columns: 1fr 1fr; }
+
+  /* Section-head: stack the title block above the meta on the right —
+     keeps the view toggle from getting jammed against the heading. */
+  .section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding-top: 20px;
+  }
+  .section-head .meta { text-align: left; }
+
+  /* Brand 3-col marquee → single column, shorter container.
+     Auto-scroll still runs but only on one track. */
+  .brand-marquee {
+    grid-template-columns: 1fr !important;
+    height: clamp(560px, 120vh, 1000px);
+  }
+  .brand-marquee .brand-col.col-2,
+  .brand-marquee .brand-col.col-3 { display: none; }
+
+  /* Strip cards: snap to viewport width, no awkward 480px overflow */
+  .collage-card-large {
+    width: clamp(280px, 84vw, 420px);
+    height: clamp(440px, 80vh, 600px);
+  }
+
+  /* Contact lead: smaller cap so 'attention.' fits, looser line so words
+     don't collide when wrapping forces an extra line. */
+  .contact-lead {
+    font-size: clamp(36px, 9vw, 64px);
+    line-height: 1.04;
+    max-width: 18ch;
+  }
+
+  /* Hero subhead — tighter so it sits closer to the headline on phones */
+  .hero-sub { margin-top: clamp(20px, 4vw, 28px); }
 }
 @media (max-width: 560px) {
+  /* Collage grid view: single column */
   .collage-grid { grid-template-columns: 1fr; }
-}
-@media (max-width: 560px) {
+
   /* Tighter, balanced header on phones */
   .topnav { padding-left: 20px; padding-right: 20px; gap: 12px; }
   .topnav .logo { font-size: 12px; letter-spacing: 0.05em; }
@@ -1389,7 +1601,16 @@ section:not(#hero).revealed .section-head {
   .hero-footer { grid-template-columns: 1fr; }
   .footer { grid-template-columns: 1fr; }
   .footer-bottom { flex-direction: column; gap: 12px; align-items: flex-start; }
-  .intro-text { font-size: clamp(26px, 7.5vw, 40px); }
+
+  /* Hero headline — smaller cap, looser leading so descenders don't clip */
+  .intro-text { font-size: clamp(28px, 8.4vw, 44px); line-height: 1.12; }
+
+  /* Contact: status strip + method tiles get more breathing room */
+  .contact-status { gap: 16px 32px; padding: 14px 0; }
+  .method-tile { min-height: 160px; padding: 20px; }
+
+  /* Scroll-to-top: smaller and lower so it doesn't crowd content */
+  .scroll-top { width: 40px; height: 40px; }
 }
 </style>
 
@@ -1958,6 +2179,8 @@ function Hero({ animation = "wave" }) {
           </span>
         </div>
       </div>
+
+      <HeroGame />
     </section>
   );
 }
@@ -1979,6 +2202,85 @@ function bangaloreClock() {
   else greeting = "Burning the midnight oil";
 
   return { time: `${hh}:${m} ${ampm}`, greeting };
+}
+
+/* HeroGame — a small "catch the dot" interaction tucked into the hero.
+   A 14px accent dot wanders on a slow sine path through the hero's lower
+   third. Click it: score++, dot teleports to a new corner of the path.
+   At 10 catches the dot vanishes and a tiny serif note slides in.
+   - Visible only on hover-capable devices (no fat-finger tap target on touch)
+   - Position is constrained to the empty space below the hero-sub and above
+     the hero-footer, so it doesn't sit over content
+   - Sits behind the cursor in z-stack; the floating cursor still leads */
+function HeroGame() {
+  const dotRef = useRefHero(null);
+  const labelRef = useRefHero(null);
+  const [score, setScore] = useStateHero(0);
+  const [done, setDone] = useStateHero(false);
+  const stateRef = useRefHero({ t: 0, raf: 0, x: 0, y: 0 });
+  const GOAL = 10;
+
+  useEffectHero(() => {
+    if (done) return undefined;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return undefined;
+    const dot = dotRef.current;
+    if (!dot) return undefined;
+    const heroEl = dot.closest(".hero");
+    if (!heroEl) return undefined;
+
+    const tick = () => {
+      const r = heroEl.getBoundingClientRect();
+      const padX = 80, padY = 40;
+      const w = Math.max(200, r.width - padX * 2);
+      const h = Math.max(140, 240); // small wander band, not full hero
+      const s = stateRef.current;
+      s.t += 0.012;
+      // Two-frequency sine path so it doesn't trace a circle
+      const fx = (Math.sin(s.t) * 0.7 + Math.sin(s.t * 0.43) * 0.3) * 0.5 + 0.5;
+      const fy = (Math.cos(s.t * 0.7) * 0.7 + Math.sin(s.t * 0.31) * 0.3) * 0.5 + 0.5;
+      s.x = padX + fx * w;
+      s.y = r.height - padY - 220 + fy * h;
+      dot.style.transform = `translate3d(${s.x}px, ${s.y}px, 0)`;
+      s.raf = requestAnimationFrame(tick);
+    };
+    stateRef.current.raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(stateRef.current.raf);
+  }, [done]);
+
+  const onCatch = () => {
+    if (done) return;
+    const next = score + 1;
+    setScore(next);
+    // Jump the phase so the dot teleports somewhere clearly different
+    stateRef.current.t += 2.3 + Math.random() * 1.4;
+    if (next >= GOAL) {
+      setDone(true);
+    }
+  };
+
+  if (typeof window !== "undefined" &&
+      !window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    return null;
+  }
+
+  return (
+    <>
+      {!done && (
+        <button
+          type="button"
+          ref={dotRef}
+          className="hero-game-dot"
+          aria-label="Catch the dot"
+          onClick={onCatch}
+        />
+      )}
+      <div className="hero-game-badge" ref={labelRef} aria-live="polite">
+        {done
+          ? <span className="done"><em>designer's eye.</em> ✓</span>
+          : <span>{score} / {GOAL}</span>}
+      </div>
+    </>
+  );
 }
 
 Object.assign(window, { Hero });
@@ -2595,16 +2897,23 @@ function Contact() {
 
       <div className="contact">
         {/* 1. Lead */}
-        {/* Each word lives in its own .lh mask. Stagger comes from --i.
-            Triggered when the contact-section gets the .revealed class
-            (same IntersectionObserver that fires section-head reveals). */}
+        {/* Each visual line is wrapped in .contact-lead-row so the line break
+            is explicit (a block) and the row never gets mashed into the row
+            above it by tight line-height. Each word inside is its own .lh
+            mask, with stagger driven by --i. */}
         <h3 className="contact-lead">
-          <span className="lh"><span style={{ "--i": 0 }}>Let's</span></span>{" "}
-          <span className="lh"><span style={{ "--i": 1 }}>make</span></span><br />
-          <span className="lh"><span style={{ "--i": 2 }} className="accent">something</span></span><br />
-          <span className="lh"><span style={{ "--i": 3 }} className="serif">worth</span></span>{" "}
-          <span className="lh"><span style={{ "--i": 4 }}>the</span></span>{" "}
-          <span className="lh"><span style={{ "--i": 5 }}>attention.</span></span>
+          <span className="contact-lead-row">
+            <span className="lh"><span style={{ "--i": 0 }}>Let's</span></span>{" "}
+            <span className="lh"><span style={{ "--i": 1 }}>make</span></span>
+          </span>
+          <span className="contact-lead-row">
+            <span className="lh"><span style={{ "--i": 2 }} className="accent">something</span></span>
+          </span>
+          <span className="contact-lead-row">
+            <span className="lh"><span style={{ "--i": 3 }} className="serif">worth</span></span>{" "}
+            <span className="lh"><span style={{ "--i": 4 }}>the</span></span>{" "}
+            <span className="lh"><span style={{ "--i": 5 }}>attention.</span></span>
+          </span>
         </h3>
 
         {/* 2. Status strip */}
@@ -2732,11 +3041,43 @@ function Footer() {
         <a href="#contact">Get in touch ↗</a>
       </div>
       <div className="footer-bottom">
-        <span>© 2026 · Adi · Bangalore</span>
+        <FooterYearEgg />
         <span>v2026.05.13 · hand-written, no templates</span>
         <span><span className="status-dot" style={{ marginRight: 6 }}></span>System OK</span>
       </div>
     </footer>
+  );
+}
+
+/* Footer year easter egg — click '© 2026' to cycle through Swiss / typography
+   landmark years. Hover hint appears on first hover so the click is discoverable
+   without shouting. Each click also shows a tiny caption next to the year. */
+function FooterYearEgg() {
+  const HISTORY = [
+    { year: "2026", note: "Adi · Bangalore" },
+    { year: "1957", note: "Helvetica · Miedinger" },
+    { year: "1961", note: "Grid Systems · Müller-Brockmann" },
+    { year: "1898", note: "Akzidenz-Grotesk · Berthold" },
+    { year: "1972", note: "NYC Subway · Vignelli" },
+    { year: "1908", note: "Bauhaus before the Bauhaus · Behrens" },
+  ];
+  const [i, setI] = useStateCt(0);
+  const [hinted, setHinted] = useStateCt(false);
+  const onClick = () => setI((x) => (x + 1) % HISTORY.length);
+  return (
+    <button
+      type="button"
+      className="footer-year-egg"
+      onClick={onClick}
+      onMouseEnter={() => setHinted(true)}
+      aria-label="Cycle design history dates"
+      title="Click for design history"
+    >
+      <span className="y">© {HISTORY[i].year}</span>
+      <span className="dot">·</span>
+      <span className="n">{HISTORY[i].note}</span>
+      {!hinted && i === 0 && <span className="hint" aria-hidden="true">↺</span>}
+    </button>
   );
 }
 
@@ -2907,6 +3248,74 @@ function ScrollProgress() {
   );
 }
 
+/* InkTrail — click/drag on any non-interactive area to leave a soft accent
+   mark that fades over ~2s. The brand accent is normally used as punctuation;
+   this turns it into a fleeting gesture you can paint with. Skips clicks on
+   links/buttons/inputs so interactive UX is unaffected. */
+function InkTrail() {
+  useEffect(() => {
+    // No precise pointer → no drawing. Skip on touch.
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return undefined;
+
+    const container = document.createElement("div");
+    container.className = "ink-trail";
+    document.body.appendChild(container);
+
+    const isInteractive = (el) => {
+      while (el && el !== document.body) {
+        if (el.matches?.(
+          "a, button, [role='button'], input, textarea, select, summary, label, " +
+          ".case, .collage-card, .method-tile, .rail-item, .hamburger, " +
+          ".theme-toggle, .cta, .topnav-center a, .submit, .footer-year-egg, " +
+          ".collage-view-toggle, .scroll-top, .twk-panel, .bubble, .hero-game-dot"
+        )) return true;
+        el = el.parentElement;
+      }
+      return false;
+    };
+    const inContact = (el) => !!el?.closest?.(".contact-section");
+
+    const spawn = (x, y, contactZone) => {
+      const m = document.createElement("span");
+      m.className = "ink-mark";
+      if (contactZone) m.dataset.zone = "accent";
+      m.style.left = x + "px";
+      m.style.top = y + "px";
+      container.appendChild(m);
+      m.addEventListener("animationend", () => m.remove(), { once: true });
+    };
+
+    let dragging = false, lastSpawn = 0;
+    const onDown = (e) => {
+      if (e.button !== 0) return;
+      if (isInteractive(e.target)) return;
+      dragging = true;
+      spawn(e.clientX, e.clientY, inContact(e.target));
+      lastSpawn = performance.now();
+    };
+    const onMove = (e) => {
+      if (!dragging) return;
+      const now = performance.now();
+      // ~32ms throttle: smooth enough for a continuous line, light on the DOM
+      if (now - lastSpawn < 32) return;
+      lastSpawn = now;
+      spawn(e.clientX, e.clientY, inContact(e.target));
+    };
+    const onUp = () => { dragging = false; };
+
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      container.remove();
+    };
+  }, []);
+  return null;
+}
+
 function ScrollTop() {
   const [shown, setShown] = useState(false);
   useEffect(() => {
@@ -3029,29 +3438,29 @@ function FloatingCursor() {
 /* Marquee — a continuously-scrolling editorial strip that lives between
    sections. Duplicates its children so the loop is seamless. Pauses on hover. */
 /* LetterReveal — splits text into chars wrapped in masked spans.
-   Reveal animation is driven by CSS on the parent .revealed section. */
+   Each word is its own inline-block container so letters can never break
+   across lines mid-word (the bug that turned "Say hello" into a vertical
+   acrostic on narrow viewports). Regular " " characters between words let
+   normal text wrapping happen. */
 function LetterReveal({ text }) {
-  // Split on word boundaries so words don't break across lines mid-letter.
   const words = text.split(" ");
   let charIdx = 0;
   return (
     <>
       {words.map((w, wi) => (
-        <span key={wi} className="lr-word">
-          {[...w].map((c, ci) => {
-            const i = charIdx++;
-            return (
-              <span key={ci} className="lh">
-                <span style={{ "--i": i }}>{c}</span>
-              </span>
-            );
-          })}
-          {wi < words.length - 1 && (
-            <span className="lh" aria-hidden="true">
-              <span style={{ "--i": charIdx++ }}>&nbsp;</span>
-            </span>
-          )}
-        </span>
+        <React.Fragment key={wi}>
+          <span className="lr-word">
+            {[...w].map((c, ci) => {
+              const i = charIdx++;
+              return (
+                <span key={ci} className="lh">
+                  <span style={{ "--i": i }}>{c}</span>
+                </span>
+              );
+            })}
+          </span>
+          {wi < words.length - 1 && " "}
+        </React.Fragment>
       ))}
     </>
   );
@@ -3135,6 +3544,7 @@ function App() {
       <ScrollProgress />
       <_OnboardingBubbles enabled={tweaks.showOnboarding} replayKey={replayOnboard} />
       <FloatingCursor />
+      <InkTrail />
       <ScrollTop />
       <KonamiEgg />
 
@@ -3160,6 +3570,16 @@ function App() {
     </>
   );
 }
+
+/* A quiet greeting in the dev console, for the curious. References Vignelli's
+   famous claim that you can do almost everything with five typefaces (we use
+   three) — a small wink to the typography heads who open Inspector. */
+console.log(
+  "%c·  ADI UIXUX  ·\n%c\"You can design almost any communication with a half-dozen typefaces.\"\n— Massimo Vignelli\n\n%cThis site uses three: Inter · JetBrains Mono · Instrument Serif.\nKonami code unlocks a note. Click empty space to leave a mark.",
+  "font:600 11px/1.4 monospace;color:#E94B1A;letter-spacing:0.18em;text-transform:uppercase;",
+  "font:italic 12px/1.5 Georgia,serif;color:#888;",
+  "font:11px/1.5 monospace;color:#666;"
+);
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
