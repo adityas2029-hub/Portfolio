@@ -32,17 +32,22 @@
   --bubble-fg: var(--bg);
   --hover: var(--fg);
   --grid: 8px;
-  --pad-x: clamp(24px, 4vw, 56px);
+  --pad-x: clamp(20px, 5vw, 40px);
   --pad-y: clamp(20px, 3vw, 32px);
+  /* Header gets extra horizontal breathing room beyond the section grid */
+  --pad-x-header: clamp(24px, 5.5vw, 48px);
   --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-display: "Instrument Serif", "Times New Roman", Georgia, serif;
   --transition: 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-/* On desktop ensure left padding clears the side rail (14px wide at left:18px = ~32px) */
+/* On desktop ensure left padding clears the side rail (14px wide at left:18px = ~32px),
+   with generous Swiss-style breathing room */
 @media (min-width: 901px) {
   :root {
-    --pad-x: clamp(52px, 5.5vw, 80px);
+    --pad-x: clamp(64px, 6.5vw, 96px);
+    /* Header sits a touch further inboard than section content for visual weight on the edge */
+    --pad-x-header: clamp(80px, 7.5vw, 128px);
   }
 }
 
@@ -102,7 +107,10 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .topnav {
   position: fixed; top: 0; left: 0; right: 0;
   display: flex; align-items: center; justify-content: space-between;
-  padding: var(--pad-y) var(--pad-x);
+  /* Use header-specific padding so the logo gets breathing room from the edge
+     even when section content sits closer to the grid */
+  padding: var(--pad-y) var(--pad-x-header);
+  gap: 24px;
   z-index: 50;
   color: var(--fg);
   pointer-events: none;
@@ -246,10 +254,12 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
    HAMBURGER (mobile)
    ============================================================ */
 .hamburger {
-  position: fixed; top: var(--pad-y); right: var(--pad-x); z-index: 60;
-  width: 36px; height: 36px; display: none;
+  position: fixed; top: var(--pad-y); right: var(--pad-x-header); z-index: 60;
+  width: 40px; height: 40px; display: none;
   flex-direction: column; justify-content: center; align-items: center;
   gap: 5px; color: var(--fg);
+  /* Match the topnav vertical center so the icon aligns with the logo baseline */
+  margin-top: -2px;
 }
 .hamburger span {
   display: block; width: 22px; height: 1.5px; background: currentColor;
@@ -261,7 +271,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 .mobile-menu {
   position: fixed; inset: 0; background: var(--bg); color: var(--fg);
-  z-index: 55; padding: calc(var(--pad-y) + 60px) var(--pad-x) var(--pad-x);
+  z-index: 55; padding: calc(var(--pad-y) + 72px) var(--pad-x-header) var(--pad-x-header);
   display: flex; flex-direction: column;
   transform: translateY(-100%); transition: transform 420ms cubic-bezier(0.7, 0, 0.2, 1);
 }
@@ -668,6 +678,8 @@ section:not(#hero).revealed .section-head {
   .topnav-center { display: none; }
   .hamburger { display: flex; }
   .topnav .cta { display: none; }
+  /* Reserve room for the fixed hamburger so the theme-toggle doesn't sit on top of it */
+  .topnav-right { margin-right: 52px; }
   .hero-footer { grid-template-columns: 1fr 1fr; }
   .case { grid-template-columns: 1fr; gap: 16px; }
   .case .case-num { padding-top: 0; }
@@ -676,6 +688,14 @@ section:not(#hero).revealed .section-head {
   .footer { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 560px) {
+  /* Tighter, balanced header on phones */
+  .topnav { padding-left: 20px; padding-right: 20px; gap: 12px; }
+  .topnav .logo { font-size: 12px; letter-spacing: 0.05em; }
+  .logo-mark { width: 26px; height: 26px; font-size: 10px; }
+  .hamburger { right: 20px; width: 36px; height: 36px; }
+  .topnav-right { margin-right: 44px; gap: 12px; }
+  .theme-toggle { width: 30px; height: 30px; }
+  .mobile-menu { padding-left: 20px; padding-right: 20px; }
   .hero-footer { grid-template-columns: 1fr; }
   .footer { grid-template-columns: 1fr; }
   .footer-bottom { flex-direction: column; gap: 12px; align-items: flex-start; }
