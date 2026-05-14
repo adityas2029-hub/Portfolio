@@ -179,6 +179,30 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .logo:hover .logo-mark::after { opacity: 0.5; }
 .logo-mark span { display: block; line-height: 1; }
 
+/* Top-nav wordmark — per-character wave on hover.
+   Each letter rises 3px and bolds, in a left-to-right stagger. The whole
+   thing reads as a single "type wave" rather than a generic underline. */
+.logo-text { display: inline-block; }
+.logo-text .lt-ch {
+  display: inline-block;
+  font-variation-settings: "wght" 600;
+  transition:
+    transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    font-variation-settings 380ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    color 240ms ease;
+  transition-delay: 0ms;
+  will-change: transform, font-variation-settings;
+}
+.logo:hover .logo-text .lt-ch {
+  transform: translateY(-3px);
+  font-variation-settings: "wght" 760;
+  transition-delay: calc(var(--i, 0) * 28ms);
+}
+.logo:hover .logo-text .lt-ch:nth-last-child(-n+3) {
+  /* The 'UIXUX' suffix gets a soft accent tint at the tail of the wave */
+  color: var(--accent);
+}
+
 .topnav-center {
   display: flex; gap: 28px;
   font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
@@ -243,13 +267,13 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .cta:hover { border-color: var(--accent); }
 
 /* On the orange contact section the regular CTA becomes invisible
-   (accent-on-accent). Re-skin it as white-on-orange so it reads,
-   then invert on hover to white-bg + orange-text. */
-.topnav.on-accent .cta { border-color: #fff; color: #fff; }
-.topnav.on-accent .cta .dot { background: #fff; animation: none; }
+   (accent-on-accent). Re-skin it as ink-on-orange so it reads, then
+   invert on hover to ink-bg + orange-text. */
+.topnav.on-accent .cta { border-color: var(--accent-ink); color: var(--accent-ink); }
+.topnav.on-accent .cta .dot { background: var(--accent-ink); animation: none; }
 .topnav.on-accent .cta .cta-text .a,
-.topnav.on-accent .cta .cta-text .b { color: #fff; }
-.topnav.on-accent .cta:hover { background: #fff; border-color: #fff; color: var(--accent); }
+.topnav.on-accent .cta .cta-text .b { color: var(--accent-ink); }
+.topnav.on-accent .cta:hover { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--accent); }
 .topnav.on-accent .cta:hover .cta-text .a,
 .topnav.on-accent .cta:hover .cta-text .b { color: var(--accent); }
 .topnav.on-accent .cta:hover .arrow { color: var(--accent); }
@@ -1095,8 +1119,51 @@ section {
   /* Scaled to be prominent but not overwhelming — roughly 3× the body text */
   font-size: clamp(32px, 5vw, 60px); font-weight: 500;
   letter-spacing: -0.04em; line-height: 0.92;
-  display: inline-flex; align-items: baseline; gap: 6px;
+  display: inline-flex; align-items: baseline;
   color: var(--fg);
+  cursor: default;
+}
+.wm-ch {
+  display: inline-block;
+  font-variation-settings: "wght" 500;
+  transition:
+    transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    font-variation-settings 700ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    color 360ms ease;
+  transition-delay: 0ms;
+  will-change: transform, font-variation-settings;
+}
+.wm-dot {
+  display: inline-block;
+  width: 0.18em; height: 0.18em;
+  background: currentColor;
+  margin: 0 0.07em 0 0.07em;
+  vertical-align: 0.16em;
+  transition:
+    transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    background 320ms ease,
+    border-radius 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: transform, background;
+}
+/* Hover the wordmark — a "weight wave" rolls L→R: each letter pulses up to
+   variable weight 800 and lifts a hair, in a 60ms stagger. The middle dot
+   becomes accent, rotates 45° and rounds, like a vermillion lozenge. */
+.footer .wm:hover .wm-ch {
+  font-variation-settings: "wght" 820;
+  transform: translateY(-3px);
+  transition-delay: calc(var(--i, 0) * 55ms);
+}
+.footer .wm:hover .wm-ch:nth-child(n+6) {
+  /* The UIXUX half tints to accent at the end of the wave */
+  color: var(--accent);
+}
+.footer .wm:hover .wm-dot {
+  background: var(--accent);
+  transform: rotate(45deg) scale(1.6);
+  border-radius: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wm-ch, .wm-dot, .logo-text .lt-ch { transition: none; }
 }
 .footer .col { display: flex; flex-direction: column; gap: 10px; }
 .footer .col .hd {
@@ -1184,94 +1251,111 @@ section.revealed .section-head h2 .lh > span {
 }
 
 /* ============================================================
-   INK TRAIL — click/drag to drop fading accent marks (~2s)
-   ============================================================ */
-.ink-trail {
-  position: fixed; inset: 0;
-  pointer-events: none;
-  z-index: 3; /* above section bg, below topnav (50) and cursor (9999) */
-}
-.ink-mark {
-  position: absolute;
-  width: 26px; height: 26px;
-  border-radius: 50%;
-  background: var(--accent);
-  transform: translate(-50%, -50%) scale(0.5);
-  opacity: 0;
-  /* 2s total: in → linger → out. Easing matches the rest of the site. */
-  animation: ink-fade 2000ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
-  will-change: transform, opacity;
-  filter: blur(0.4px); /* a hair softer — feels painted, not stamped */
-}
-/* When clicked over the orange contact section, flip to ink so the mark is
-   still visible — the gesture is what matters, not the colour. */
-.ink-mark[data-zone="accent"] { background: var(--accent-ink); }
+   GRID REVEAL — designer x-ray (press G) + click-to-flash column
+   ============================================================
+   The site is built on a 12-column Müller-Brockmann grid. The
+   overlay paints that grid (and the 8pt baseline as a subtle
+   horizontal pattern) in accent at low opacity, so the bones
+   of every layout decision become legible. Quiet, hidden,
+   designer-relevant — meant to be discovered, not used. */
 
-@keyframes ink-fade {
-  0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-  12%  { transform: translate(-50%, -50%) scale(1.0); opacity: 0.85; }
-  55%  { transform: translate(-50%, -50%) scale(1.15); opacity: 0.6; }
-  100% { transform: translate(-50%, -50%) scale(1.9); opacity: 0; }
+.grid-overlay {
+  position: fixed;
+  top: 0; bottom: 0;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  z-index: 8000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 360ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.grid-overlay-cols {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp(16px, 1.6vw, 24px);
+  height: 100%;
+}
+.grid-overlay-cols > span {
+  background: color-mix(in oklab, var(--accent) 8%, transparent);
+  border-left: 1px solid color-mix(in oklab, var(--accent) 35%, transparent);
+  border-right: 1px solid color-mix(in oklab, var(--accent) 35%, transparent);
+}
+/* 8pt baseline rhythm as a faint horizontal repeating pattern */
+.grid-overlay::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 7px,
+    color-mix(in oklab, var(--accent) 16%, transparent) 7px,
+    color-mix(in oklab, var(--accent) 16%, transparent) 8px
+  );
+  pointer-events: none;
+}
+body.grid-mode .grid-overlay { opacity: 1; }
+@supports not (background: color-mix(in oklab, red 10%, transparent)) {
+  /* Fallback for older browsers — just use a translucent accent */
+  .grid-overlay-cols > span { background: rgba(233,75,26,0.08); border-color: rgba(233,75,26,0.35); }
+}
+
+/* Mode badge — mono pill bottom-center when grid mode is on */
+.grid-mode-badge {
+  position: fixed; left: 50%;
+  bottom: clamp(24px, 4vw, 48px);
+  transform: translateX(-50%) translateY(8px);
+  background: var(--fg); color: var(--bg);
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+  z-index: 8001;
+  display: inline-flex; align-items: center; gap: 12px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 320ms ease, transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+.grid-mode-badge.show {
+  opacity: 1; transform: translateX(-50%) translateY(0);
+}
+.grid-mode-badge .gm-label { color: var(--accent); }
+.grid-mode-badge .gm-key { opacity: 0.6; }
+.grid-mode-badge kbd {
+  display: inline-block;
+  padding: 2px 6px; margin: 0 2px;
+  border: 1px solid currentColor; border-radius: 3px;
+  font-family: inherit; font-size: 9px;
+  color: var(--bg);
+}
+
+/* Click-to-flash: a thin vertical accent strip blooms at the click x.
+   Tells you which "column" you clicked in without committing to the
+   full grid mode. Auto-removes after the keyframe. */
+.grid-flash {
+  position: fixed;
+  top: 0; bottom: 0;
+  width: 28px;
+  background: color-mix(in oklab, var(--accent) 14%, transparent);
+  border-left: 1px solid color-mix(in oklab, var(--accent) 60%, transparent);
+  border-right: 1px solid color-mix(in oklab, var(--accent) 60%, transparent);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 7999;
+  animation: grid-flash 1200ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+@supports not (background: color-mix(in oklab, red 10%, transparent)) {
+  .grid-flash { background: rgba(233,75,26,0.14); border-color: rgba(233,75,26,0.6); }
+}
+@keyframes grid-flash {
+  0%   { opacity: 0; transform: translateX(-50%) scaleY(0.92); }
+  18%  { opacity: 1; transform: translateX(-50%) scaleY(1); }
+  100% { opacity: 0; transform: translateX(-50%) scaleY(1); }
 }
 
 @media (max-width: 900px), (hover: none), (pointer: coarse) {
-  .ink-trail { display: none; }
+  .grid-flash, .grid-overlay, .grid-mode-badge { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ink-mark { animation-duration: 400ms; }
-}
-
-/* ============================================================
-   HERO MINI GAME — small wandering dot, tap-to-score
-   ============================================================ */
-/* The dot is absolutely positioned inside the hero; we drive translate
-   in JS so layout stays still. Stays out of the way of the headline
-   (path constrained to the lower band of the hero). */
-.hero-game-dot {
-  position: absolute; left: 0; top: 0;
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 0; padding: 0; margin: 0;
-  cursor: pointer;
-  z-index: 4;
-  box-shadow: 0 0 0 0 rgba(233,75,26,0.45);
-  animation: hg-pulse 2.1s infinite;
-  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
-}
-.hero-game-dot:hover { transform: scale(1.2); }
-.hero-game-dot:active { transform: scale(0.85); }
-@keyframes hg-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(233,75,26,0.45); }
-  70%  { box-shadow: 0 0 0 10px rgba(233,75,26,0); }
-  100% { box-shadow: 0 0 0 0 rgba(233,75,26,0); }
-}
-.hero-game-badge {
-  position: absolute; right: clamp(20px, 4vw, 56px); top: clamp(120px, 12vh, 160px);
-  font-family: var(--font-mono);
-  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--muted);
-  z-index: 4;
-  pointer-events: none;
-  display: inline-flex; align-items: center; gap: 8px;
-  opacity: 0.7;
-  transition: opacity 320ms ease;
-}
-.hero-game-badge::before {
-  content: "·";
-  color: var(--accent);
-  font-size: 14px;
-  line-height: 1;
-}
-.hero-game-badge:hover { opacity: 1; }
-.hero-game-badge .done em {
-  font-family: var(--font-display); font-style: italic;
-  font-size: 14px; color: var(--accent);
-  text-transform: none; letter-spacing: -0.005em;
-}
-@media (max-width: 900px), (hover: none), (pointer: coarse) {
-  .hero-game-dot, .hero-game-badge { display: none !important; }
+  .grid-flash { animation-duration: 400ms; }
+  .grid-overlay, .grid-mode-badge { transition: none; }
 }
 
 /* ============================================================
@@ -1946,7 +2030,11 @@ function TopNav({ onToggleTheme, themeMode, onCta }) {
     <header className={`topnav ${scrolled ? "scrolled" : ""} ${onAccent ? "on-accent" : ""}`}>
       <a href="#hero" className="logo" aria-label="ADI UIXUX home">
         <span className="logo-mark"><span>A</span></span>
-        <span>ADI UIXUX</span>
+        <span className="logo-text" aria-hidden="true">
+          {"ADI UIXUX".split("").map((c, i) => (
+            <span key={i} className="lt-ch" style={{ "--i": i }}>{c === " " ? " " : c}</span>
+          ))}
+        </span>
       </a>
       <nav className="topnav-center" aria-label="Primary">
         <a href="#work">Work</a>
@@ -2180,7 +2268,6 @@ function Hero({ animation = "wave" }) {
         </div>
       </div>
 
-      <HeroGame />
     </section>
   );
 }
@@ -2202,85 +2289,6 @@ function bangaloreClock() {
   else greeting = "Burning the midnight oil";
 
   return { time: `${hh}:${m} ${ampm}`, greeting };
-}
-
-/* HeroGame — a small "catch the dot" interaction tucked into the hero.
-   A 14px accent dot wanders on a slow sine path through the hero's lower
-   third. Click it: score++, dot teleports to a new corner of the path.
-   At 10 catches the dot vanishes and a tiny serif note slides in.
-   - Visible only on hover-capable devices (no fat-finger tap target on touch)
-   - Position is constrained to the empty space below the hero-sub and above
-     the hero-footer, so it doesn't sit over content
-   - Sits behind the cursor in z-stack; the floating cursor still leads */
-function HeroGame() {
-  const dotRef = useRefHero(null);
-  const labelRef = useRefHero(null);
-  const [score, setScore] = useStateHero(0);
-  const [done, setDone] = useStateHero(false);
-  const stateRef = useRefHero({ t: 0, raf: 0, x: 0, y: 0 });
-  const GOAL = 10;
-
-  useEffectHero(() => {
-    if (done) return undefined;
-    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return undefined;
-    const dot = dotRef.current;
-    if (!dot) return undefined;
-    const heroEl = dot.closest(".hero");
-    if (!heroEl) return undefined;
-
-    const tick = () => {
-      const r = heroEl.getBoundingClientRect();
-      const padX = 80, padY = 40;
-      const w = Math.max(200, r.width - padX * 2);
-      const h = Math.max(140, 240); // small wander band, not full hero
-      const s = stateRef.current;
-      s.t += 0.012;
-      // Two-frequency sine path so it doesn't trace a circle
-      const fx = (Math.sin(s.t) * 0.7 + Math.sin(s.t * 0.43) * 0.3) * 0.5 + 0.5;
-      const fy = (Math.cos(s.t * 0.7) * 0.7 + Math.sin(s.t * 0.31) * 0.3) * 0.5 + 0.5;
-      s.x = padX + fx * w;
-      s.y = r.height - padY - 220 + fy * h;
-      dot.style.transform = `translate3d(${s.x}px, ${s.y}px, 0)`;
-      s.raf = requestAnimationFrame(tick);
-    };
-    stateRef.current.raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(stateRef.current.raf);
-  }, [done]);
-
-  const onCatch = () => {
-    if (done) return;
-    const next = score + 1;
-    setScore(next);
-    // Jump the phase so the dot teleports somewhere clearly different
-    stateRef.current.t += 2.3 + Math.random() * 1.4;
-    if (next >= GOAL) {
-      setDone(true);
-    }
-  };
-
-  if (typeof window !== "undefined" &&
-      !window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-    return null;
-  }
-
-  return (
-    <>
-      {!done && (
-        <button
-          type="button"
-          ref={dotRef}
-          className="hero-game-dot"
-          aria-label="Catch the dot"
-          onClick={onCatch}
-        />
-      )}
-      <div className="hero-game-badge" ref={labelRef} aria-live="polite">
-        {done
-          ? <span className="done"><em>designer's eye.</em> ✓</span>
-          : <span>{score} / {GOAL}</span>}
-      </div>
-    </>
-  );
 }
 
 Object.assign(window, { Hero });
@@ -3005,8 +3013,14 @@ function Footer() {
   return (
     <footer className="footer" id="about">
       <div className="brand-block">
-        <div className="wm">
-          ADI<span style={{ display: "inline-block", width: "0.18em", height: "0.18em", background: "currentColor", marginLeft: "0.06em", marginRight: "0.04em", verticalAlign: "0.18em" }}></span>UIXUX
+        <div className="wm" aria-label="ADI UIXUX">
+          {"ADI".split("").map((c, i) => (
+            <span key={`a${i}`} className="wm-ch" style={{ "--i": i }}>{c}</span>
+          ))}
+          <span className="wm-dot" aria-hidden="true" />
+          {"UIXUX".split("").map((c, i) => (
+            <span key={`u${i}`} className="wm-ch" style={{ "--i": i + 4 }}>{c}</span>
+          ))}
         </div>
         <div style={{ color: "var(--muted)", maxWidth: "36ch", fontSize: 14, lineHeight: 1.55 }}>
           Independent product &amp; systems designer. Strategy-first. Pixel-stubborn. Currently in Bangalore — open to remote &amp; on-site work.
@@ -3248,18 +3262,46 @@ function ScrollProgress() {
   );
 }
 
-/* InkTrail — click/drag on any non-interactive area to leave a soft accent
-   mark that fades over ~2s. The brand accent is normally used as punctuation;
-   this turns it into a fleeting gesture you can paint with. Skips clicks on
-   links/buttons/inputs so interactive UX is unaffected. */
-function InkTrail() {
-  useEffect(() => {
-    // No precise pointer → no drawing. Skip on touch.
-    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return undefined;
+/* GridReveal — the design system, made visible.
+   The whole site is built on a 12-column Müller-Brockmann grid; the rule
+   normally lives only in the CSS. Pressing G (or Escape to dismiss) toggles
+   an overlay that paints the grid + 8pt baseline so the construction becomes
+   inspectable. Clicking an empty area gives a 1.2s flash of the column you
+   clicked in — a peek at the grid without committing to the full mode.
 
-    const container = document.createElement("div");
-    container.className = "ink-trail";
-    document.body.appendChild(container);
+   References Müller-Brockmann's 'Grid Systems' (1961). Pure designer fan-
+   service: it teaches and signals craft without taking screen real estate. */
+function GridReveal() {
+  const [full, setFull] = useState(false);
+
+  // Press G to toggle (skipped when typing). Escape closes.
+  useEffect(() => {
+    const onKey = (e) => {
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "g" || e.key === "G") {
+        e.preventDefault();
+        setFull((v) => !v);
+      } else if (e.key === "Escape" && full) {
+        setFull(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [full]);
+
+  // Body class drives the full-grid overlay
+  useEffect(() => {
+    document.body.classList.toggle("grid-mode", full);
+    return () => document.body.classList.remove("grid-mode");
+  }, [full]);
+
+  // Click anywhere on an empty area → flash a vertical accent strip
+  // at the click X for ~1.2s. Skips real interactive elements.
+  useEffect(() => {
+    if (full) return undefined;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return undefined;
 
     const isInteractive = (el) => {
       while (el && el !== document.body) {
@@ -3267,53 +3309,39 @@ function InkTrail() {
           "a, button, [role='button'], input, textarea, select, summary, label, " +
           ".case, .collage-card, .method-tile, .rail-item, .hamburger, " +
           ".theme-toggle, .cta, .topnav-center a, .submit, .footer-year-egg, " +
-          ".collage-view-toggle, .scroll-top, .twk-panel, .bubble, .hero-game-dot"
+          ".collage-view-toggle, .scroll-top, .twk-panel, .bubble"
         )) return true;
         el = el.parentElement;
       }
       return false;
     };
-    const inContact = (el) => !!el?.closest?.(".contact-section");
 
-    const spawn = (x, y, contactZone) => {
-      const m = document.createElement("span");
-      m.className = "ink-mark";
-      if (contactZone) m.dataset.zone = "accent";
-      m.style.left = x + "px";
-      m.style.top = y + "px";
-      container.appendChild(m);
-      m.addEventListener("animationend", () => m.remove(), { once: true });
-    };
-
-    let dragging = false, lastSpawn = 0;
-    const onDown = (e) => {
+    const onClick = (e) => {
       if (e.button !== 0) return;
       if (isInteractive(e.target)) return;
-      dragging = true;
-      spawn(e.clientX, e.clientY, inContact(e.target));
-      lastSpawn = performance.now();
+      const flash = document.createElement("div");
+      flash.className = "grid-flash";
+      flash.style.left = e.clientX + "px";
+      flash.addEventListener("animationend", () => flash.remove(), { once: true });
+      document.body.appendChild(flash);
     };
-    const onMove = (e) => {
-      if (!dragging) return;
-      const now = performance.now();
-      // ~32ms throttle: smooth enough for a continuous line, light on the DOM
-      if (now - lastSpawn < 32) return;
-      lastSpawn = now;
-      spawn(e.clientX, e.clientY, inContact(e.target));
-    };
-    const onUp = () => { dragging = false; };
+    window.addEventListener("click", onClick);
+    return () => window.removeEventListener("click", onClick);
+  }, [full]);
 
-    window.addEventListener("mousedown", onDown);
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    return () => {
-      window.removeEventListener("mousedown", onDown);
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-      container.remove();
-    };
-  }, []);
-  return null;
+  return (
+    <>
+      <div className="grid-overlay" aria-hidden="true">
+        <div className="grid-overlay-cols">
+          {Array.from({ length: 12 }, (_, i) => <span key={i} />)}
+        </div>
+      </div>
+      <div className={`grid-mode-badge ${full ? "show" : ""}`} role="status">
+        <span className="gm-label">12-col · 8pt baseline</span>
+        <span className="gm-key">Press <kbd>G</kbd> to close</span>
+      </div>
+    </>
+  );
 }
 
 function ScrollTop() {
@@ -3544,7 +3572,7 @@ function App() {
       <ScrollProgress />
       <_OnboardingBubbles enabled={tweaks.showOnboarding} replayKey={replayOnboard} />
       <FloatingCursor />
-      <InkTrail />
+      <GridReveal />
       <ScrollTop />
       <KonamiEgg />
 
@@ -3575,7 +3603,7 @@ function App() {
    famous claim that you can do almost everything with five typefaces (we use
    three) — a small wink to the typography heads who open Inspector. */
 console.log(
-  "%c·  ADI UIXUX  ·\n%c\"You can design almost any communication with a half-dozen typefaces.\"\n— Massimo Vignelli\n\n%cThis site uses three: Inter · JetBrains Mono · Instrument Serif.\nKonami code unlocks a note. Click empty space to leave a mark.",
+  "%c·  ADI UIXUX  ·\n%c\"You can design almost any communication with a half-dozen typefaces.\"\n— Massimo Vignelli\n\n%cThis site uses three: Inter · JetBrains Mono · Instrument Serif.\nBuilt on a 12-column Müller-Brockmann grid · 8pt baseline.\n\n  G        →  Reveal the grid\n  click    →  Flash the column you clicked in\n  ↑↑↓↓←→←→BA →  ¯\\_(ツ)_/¯",
   "font:600 11px/1.4 monospace;color:#E94B1A;letter-spacing:0.18em;text-transform:uppercase;",
   "font:italic 12px/1.5 Georgia,serif;color:#888;",
   "font:11px/1.5 monospace;color:#666;"
