@@ -4,18 +4,16 @@
    ============================================================ */
 
 :root {
-  /* Warm cream + warm ink + vermillion accent.
-     Bold but restrained — only one accent, used as punctuation. */
-  --bg: #F2EDE3;          /* warm bone */
-  --bg-2: #EAE3D4;        /* deeper cream for accent panels */
-  --fg: #16120E;          /* warm ink, almost-black */
+  --bg: #F2EDE3;
+  --bg-2: #EAE3D4;
+  --fg: #16120E;
   --fg-2: #2A241E;
   --muted: #6E665C;
   --muted-2: #A89F92;
   --line: rgba(22,18,14,0.14);
   --line-strong: rgba(22,18,14,0.55);
-  --accent: #E94B1A;      /* vermillion */
-  --accent-ink: #0F0A07;  /* paired ink for use on accent bg */
+  --accent: #E94B1A;
+  --accent-ink: #0F0A07;
   --rail-fill: var(--fg);
   --bubble-bg: var(--fg);
   --bubble-fg: var(--bg);
@@ -23,9 +21,16 @@
   --grid: 8px;
   --pad-x: clamp(20px, 4vw, 56px);
   --pad-y: clamp(20px, 3vw, 32px);
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-display: "Instrument Serif", "Times New Roman", Georgia, serif;
   --transition: 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (min-width: 901px) {
+  :root {
+    --pad-x: clamp(64px, 6.5vw, 96px);
+  }
 }
 
 [data-theme="dark"] {
@@ -48,14 +53,25 @@ html, body {
   margin: 0; padding: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-weight: 400;
-  font-size: 14px;
-  line-height: 1.45;
-  letter-spacing: -0.01em;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
   transition: background 600ms ease, color 600ms ease;
   scroll-behavior: smooth;
   overflow-x: hidden;
+}
+
+/* Mono for system voice: labels, numbers, section markers, metadata */
+.mono, .eyebrow, .label,
+.hero-eyebrow, .hero-footer,
+.section-head .num, .section-head h2, .section-head .meta,
+.case-num, .case .case-meta .tags,
+.topnav-center, .cta,
+.footer .col .hd, .footer-bottom, .menu-foot,
+.bubble {
+  font-family: var(--font-mono);
 }
 
 ::selection { background: var(--fg); color: var(--bg); }
@@ -132,10 +148,26 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 }
 .logo:hover .logo-mark::after { opacity: 0.5; }
 .logo-mark span { display: block; line-height: 1; }
-.logo .placeholder-note {
-  font-size: 9px; color: currentColor; opacity: 0.45;
-  letter-spacing: 0.15em;
-  display: none;
+
+/* Per-character wave on logo hover — each letter rises and bolds
+   with a left-to-right stagger; the UIXUX tail tints to accent. */
+.logo-text { display: inline-block; }
+.logo-text .lt-ch {
+  display: inline-block;
+  font-variation-settings: "wght" 600;
+  transition: transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1),
+              font-variation-settings 380ms cubic-bezier(0.2, 0.7, 0.2, 1),
+              color 240ms ease;
+  transition-delay: 0ms;
+  will-change: transform, font-variation-settings;
+}
+.logo:hover .logo-text .lt-ch {
+  transform: translateY(-3px);
+  font-variation-settings: "wght" 760;
+  transition-delay: calc(var(--i, 0) * 28ms);
+}
+.logo:hover .logo-text .lt-ch:nth-last-child(-n+3) {
+  color: var(--accent);
 }
 
 .topnav-center {
@@ -392,12 +424,12 @@ section {
 }
 
 .intro-text {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: clamp(28px, 4.4vw, 68px);
-  line-height: 1.12;
+  font-family: var(--font-sans);
+  font-weight: 450;
+  font-size: clamp(30px, 4.8vw, 72px);
+  line-height: 1.06;
   letter-spacing: -0.03em;
-  max-width: 22ch;
+  max-width: 20ch;
   margin: 0;
   text-wrap: pretty;
   color: var(--fg);
@@ -463,12 +495,12 @@ section {
 }
 
 .hero-sub {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-weight: 400;
-  font-size: clamp(13px, 1.05vw, 16px);
+  font-size: clamp(14px, 1.05vw, 17px);
   line-height: 1.6;
   letter-spacing: -0.005em;
-  max-width: 52ch;
+  max-width: 56ch;
   color: var(--muted);
   margin: clamp(28px, 4vw, 44px) 0 0;
 }
@@ -476,14 +508,15 @@ section {
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 400;
-  font-size: 1.15em;
+  font-size: 1.12em;
   color: var(--fg);
   letter-spacing: -0.01em;
 }
 
 .hero-footer {
-  margin-top: auto;
-  padding-top: clamp(60px, 10vh, 120px);
+  margin-top: clamp(48px, 8vh, 96px);
+  padding-top: clamp(32px, 5vh, 56px);
+  border-top: 1px solid var(--line);
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 24px;
@@ -493,6 +526,13 @@ section {
 .hero-footer .col .k { color: var(--muted); font-size: 10px; }
 .hero-footer .col .v { color: var(--fg); font-weight: 500; }
 .hero-footer .col .v a { display: inline-flex; align-items: center; gap: 6px; }
+.hero-eyebrow .clock-time { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+.status-dot {
+  display: inline-block; width: 6px; height: 6px;
+  background: var(--accent); border-radius: 50%;
+  animation: pulse 2.4s infinite; vertical-align: middle; margin-right: 4px;
+}
 
 .scroll-cue {
   position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%);
@@ -890,16 +930,31 @@ section {
   .topnav-center { display: none; }
   .hamburger { display: flex; }
   .topnav .cta { display: none; }
+  /* Space for hamburger so theme-toggle doesn't overlap it */
+  .topnav-right { margin-right: 52px; }
   .hero-footer { grid-template-columns: 1fr 1fr; }
   .case { grid-template-columns: 1fr; gap: 16px; }
   .case .case-num { padding-top: 0; }
   .case .open-arrow { display: none; }
+  /* Section head: stack on mobile so meta doesn't jam against title */
+  .section-head { flex-direction: column; align-items: flex-start; gap: 14px; padding-top: 20px; }
+  .section-head .meta { text-align: left; }
   .contact { grid-template-columns: 1fr; }
   .footer { grid-template-columns: 1fr 1fr; }
+  /* Hero sub: tighter spacing on small screens */
+  .hero-sub { margin-top: clamp(20px, 4vw, 28px); }
 }
 @media (max-width: 560px) {
+  /* Tighter, balanced topnav on phones */
+  .topnav { padding-left: 20px; padding-right: 20px; gap: 12px; }
+  .topnav .logo { font-size: 12px; letter-spacing: 0.05em; }
+  .logo-mark { width: 26px; height: 26px; font-size: 10px; }
+  .hamburger { right: 20px; width: 36px; height: 36px; }
+  .topnav-right { margin-right: 44px; gap: 12px; }
+  .theme-toggle { width: 30px; height: 30px; }
+  .mobile-menu { padding-left: 20px; padding-right: 20px; }
   .hero-footer { grid-template-columns: 1fr; }
   .footer { grid-template-columns: 1fr; }
   .footer-bottom { flex-direction: column; gap: 12px; align-items: flex-start; }
-  .intro-text { font-size: clamp(28px, 7.5vw, 44px); }
+  .intro-text { font-size: clamp(28px, 8.4vw, 44px); line-height: 1.12; }
 }

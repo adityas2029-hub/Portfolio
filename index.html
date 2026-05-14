@@ -552,6 +552,27 @@ section {
   animation: pulse 2.4s infinite; vertical-align: middle; margin-right: 4px;
 }
 
+/* Scroll cue — centered under the hero footer, tells first-time visitors to
+   scroll. Flanked by thin horizontal rules. Hidden on coarse-pointer (touch)
+   devices since the gesture is already obvious there. */
+.scroll-cue {
+  position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%);
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--muted);
+  display: flex; align-items: center; gap: 12px;
+  white-space: nowrap;
+  animation: scrollCueFade 2.4s ease-in-out infinite;
+}
+.scroll-cue::before, .scroll-cue::after {
+  content: ""; width: 28px; height: 1px; background: currentColor;
+}
+@keyframes scrollCueFade {
+  0%, 100% { opacity: 0.4; } 50% { opacity: 0.9; }
+}
+@media (hover: none), (pointer: coarse) {
+  .scroll-cue { display: none; }
+}
+
 /* ============================================================
    WORK / CASE STUDIES
    ============================================================ */
@@ -624,6 +645,22 @@ section {
               color 320ms ease, letter-spacing 420ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .case .case-sub { font-family: var(--font-sans); font-size: 14px; color: var(--muted); max-width: 42ch; line-height: 1.55; }
+/* Outcome metric — a single number that anchors the case's impact at a glance.
+   Mono for the value (tabular, precise), muted label beneath. */
+.case .case-metric {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--line);
+}
+.case .metric-value {
+  font-family: var(--font-mono); font-size: clamp(22px, 2.4vw, 32px);
+  font-weight: 500; letter-spacing: -0.04em; line-height: 1;
+  color: var(--accent); transition: color 320ms ease;
+}
+.case:hover .metric-value { color: var(--accent); }
+.case .metric-label {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+}
 .case .case-thumb {
   position: relative; aspect-ratio: 16 / 10;
   background: var(--bg-2); overflow: hidden; display: grid; place-items: center;
@@ -1599,6 +1636,83 @@ body.grid-mode .grid-overlay { opacity: 1; }
 }
 
 /* ============================================================
+   ABOUT SECTION
+   ============================================================ */
+.about-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(40px, 8vw, 120px);
+  align-items: start;
+}
+.about-statement {
+  font-family: var(--font-sans);
+  font-size: clamp(32px, 4.8vw, 72px);
+  font-weight: 450;
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  margin: 0;
+  max-width: 16ch;
+}
+.about-statement em {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.06em;
+  letter-spacing: -0.015em;
+  color: var(--accent);
+}
+.about-details { display: flex; flex-direction: column; gap: 36px; }
+.about-block { display: flex; flex-direction: column; gap: 12px; }
+.about-block .block-label {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted);
+}
+.about-block .block-body {
+  font-size: 15px; line-height: 1.6; color: var(--fg);
+  max-width: 48ch;
+}
+.about-process {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.about-process li {
+  display: flex; gap: 16px; align-items: baseline;
+  font-size: 14px; line-height: 1.5; border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+.about-process li:last-child { border-bottom: 0; padding-bottom: 0; }
+.about-process .step-num {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+  color: var(--accent); flex: 0 0 28px;
+}
+.about-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.about-tool {
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  border: 1px solid var(--line); padding: 4px 10px;
+  transition: border-color var(--transition), color var(--transition);
+}
+.about-tool:hover { border-color: var(--accent); color: var(--accent); }
+/* Stats strip — grounded baseline separating the two-col layout from numbers */
+.about-stats {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 24px; margin-top: clamp(48px, 8vw, 80px);
+  padding-top: clamp(32px, 5vh, 48px); border-top: 1px solid var(--line);
+}
+.stat { display: flex; flex-direction: column; gap: 6px; }
+.stat .stat-num {
+  font-family: var(--font-mono);
+  font-size: clamp(28px, 3.6vw, 48px); font-weight: 500;
+  line-height: 1; letter-spacing: -0.04em;
+}
+.stat .stat-num .acc { color: var(--accent); }
+.stat .stat-label {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ============================================================
    TWEAKS PANEL
    ============================================================ */
 .tweaks-host { font-family: var(--font-mono); }
@@ -1669,6 +1783,10 @@ section:not(#hero).revealed .section-head {
 
   /* Hero subhead — tighter so it sits closer to the headline on phones */
   .hero-sub { margin-top: clamp(20px, 4vw, 28px); }
+
+  /* About section — stack on mobile */
+  .about-body { grid-template-columns: 1fr; gap: 40px; }
+  .about-stats { grid-template-columns: 1fr 1fr; gap: 20px 32px; }
 }
 @media (max-width: 560px) {
   /* Collage grid view: single column */
@@ -1695,6 +1813,9 @@ section:not(#hero).revealed .section-head {
 
   /* Scroll-to-top: smaller and lower so it doesn't crowd content */
   .scroll-top { width: 40px; height: 40px; }
+
+  /* About stats: full column on very small phones */
+  .about-stats { grid-template-columns: 1fr 1fr; }
 }
 </style>
 
@@ -2268,6 +2389,9 @@ function Hero({ animation = "wave" }) {
         </div>
       </div>
 
+      <div className="scroll-cue" aria-hidden="true">
+        <span>Keep scrolling</span>
+      </div>
     </section>
   );
 }
@@ -2308,6 +2432,7 @@ const CASE_STUDIES = [
     tags: ["Consumer", "Research-led", "Inclusive", "iOS"],
     year: "2025", duration: "6 months",
     mockup: "dating",
+    metric: { value: "40+", label: "user research sessions" },
   },
   {
     id: "cs-02", num: "C/02",
@@ -2318,6 +2443,7 @@ const CASE_STUDIES = [
     tags: ["GovTech", "Service design", "Strategy", "Multi-modal"],
     year: "2024", duration: "9 months",
     mockup: "mobility",
+    metric: { value: "12M", label: "people, one platform" },
   },
   {
     id: "cs-03", num: "C/03",
@@ -2328,6 +2454,7 @@ const CASE_STUDIES = [
     tags: ["B2B", "Operations", "Design system", "Web"],
     year: "2023", duration: "12 months",
     mockup: "foodops",
+    metric: { value: "22%", label: "reduction in prep-to-plate" },
   },
 ];
 
@@ -2368,6 +2495,12 @@ function Work() {
               <div className="tags">
                 {c.tags.map((t) => <span key={t} className="tag">{t}</span>)}
               </div>
+              {c.metric && (
+                <div className="case-metric">
+                  <span className="metric-value">{c.metric.value}</span>
+                  <span className="metric-label">{c.metric.label}</span>
+                </div>
+              )}
             </div>
             <div className={`case-thumb${c.mockup ? " has-image" : ""}`}>
               {c.mockup && <CaseMockup variant={c.mockup} />}
@@ -2873,6 +3006,84 @@ function Collage() {
 Object.assign(window, { Collage });
 </script>
 
+<!-- ── About ─────────────────────────────────────────────────── -->
+<script type="text/babel">
+function About() {
+  return (
+    <section id="about" data-screen-label="04 About">
+      <div className="section-head">
+        <div style={{ display: "flex", gap: 20, alignItems: "baseline" }}>
+          <span className="num" style={{ color: "var(--accent)" }}>§ 04 / About</span>
+          <h2><LetterReveal text="The person behind the work" /></h2>
+        </div>
+        <div className="meta"><div>7 years · Bangalore · Open to relocation</div></div>
+      </div>
+
+      <div className="about-body">
+        {/* Left — the big opinionated statement */}
+        <h3 className="about-statement">
+          I design systems that think clearly and feel <em>inevitable</em>.
+        </h3>
+
+        {/* Right — structured details */}
+        <div className="about-details">
+          <div className="about-block">
+            <span className="block-label">Philosophy</span>
+            <p className="block-body">
+              The most powerful design decisions happen before any pixel is touched —
+              in the research, the constraint mapping, the framing. I work strategy-first
+              and believe that opinionated design is kinder than ambiguous design.
+              If it doesn't provoke a reaction, it wasn't designed; it was assembled.
+            </p>
+          </div>
+
+          <div className="about-block">
+            <span className="block-label">How I work</span>
+            <ol className="about-process">
+              <li><span className="step-num">01 —</span><span>Understand the real problem, not the stated one.</span></li>
+              <li><span className="step-num">02 —</span><span>Map constraints and the tensions between them.</span></li>
+              <li><span className="step-num">03 —</span><span>Prototype the thinking before the interface.</span></li>
+              <li><span className="step-num">04 —</span><span>Ship with craft — the details carry the argument.</span></li>
+            </ol>
+          </div>
+
+          <div className="about-block">
+            <span className="block-label">Tools &amp; disciplines</span>
+            <div className="about-tools">
+              {["Figma", "FigJam", "Framer", "Principle", "Maze", "HTML/CSS", "React (this site)", "Service blueprints", "Design systems", "Product strategy"].map((t) => (
+                <span key={t} className="about-tool">{t}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats strip — numbers that anchor the narrative */}
+      <div className="about-stats">
+        <div className="stat">
+          <div className="stat-num">7<span className="acc">+</span></div>
+          <div className="stat-label">Years designing</div>
+        </div>
+        <div className="stat">
+          <div className="stat-num">3</div>
+          <div className="stat-label">0→1 products shipped</div>
+        </div>
+        <div className="stat">
+          <div className="stat-num">12<span className="acc">M</span></div>
+          <div className="stat-label">Users reached</div>
+        </div>
+        <div className="stat">
+          <div className="stat-num">B<span className="acc">.</span>Des</div>
+          <div className="stat-label">MAHE Manipal · 2022</div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+Object.assign(window, { About });
+</script>
+
 <!-- ── Contact + Footer ───────────────────────────────────────── -->
 <script type="text/babel">
 const { useState: useStateCt, useEffect: useEffectCt } = React;
@@ -2894,10 +3105,10 @@ function Contact() {
   };
 
   return (
-    <section id="contact" className="contact-section" data-screen-label="04 Contact">
+    <section id="contact" className="contact-section" data-screen-label="05 Contact">
       <div className="section-head">
         <div style={{ display: "flex", gap: 20, alignItems: "baseline" }}>
-          <span className="num">§ 04 / Contact</span>
+          <span className="num">§ 05 / Contact</span>
           <h2><LetterReveal text="Say hello" /></h2>
         </div>
         <div className="meta"><div>Replies within 24h · usually faster</div></div>
@@ -3011,7 +3222,7 @@ function formatBangaloreTime() {
 
 function Footer() {
   return (
-    <footer className="footer" id="about">
+    <footer className="footer" id="footer-base">
       <div className="brand-block">
         <div className="wm" aria-label="ADI UIXUX">
           {"ADI".split("").map((c, i) => (
@@ -3038,6 +3249,7 @@ function Footer() {
         <a href="#hero">Intro</a>
         <a href="#work">Selected work</a>
         <a href="#collage">Brand &amp; posters</a>
+        <a href="#about">About</a>
         <a href="#contact">Contact</a>
       </div>
       <div className="col">
@@ -3179,6 +3391,7 @@ const _MobileNav       = window.MobileNav;
 const _Hero            = window.Hero;
 const _Work            = window.Work;
 const _Collage         = window.Collage;
+const _About           = window.About;
 const _Contact         = window.Contact;
 const _Footer          = window.Footer;
 const _OnboardingBubbles = window.OnboardingBubbles;
@@ -3188,8 +3401,8 @@ const NAV_ITEMS = [
   { id: "hero",    label: "Intro" },
   { id: "work",    label: "Work" },
   { id: "collage", label: "Brand" },
-  { id: "contact", label: "Contact" },
   { id: "about",   label: "About" },
+  { id: "contact", label: "Contact" },
 ];
 
 const DEFAULTS = {
@@ -3565,6 +3778,7 @@ function App() {
         <Marquee />
         <_Work />
         <_Collage />
+        <_About />
         <_Contact />
       </main>
       <_Footer />

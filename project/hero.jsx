@@ -1,6 +1,22 @@
 /* global React */
 const { useRef: useRefHero, useEffect: useEffectHero, useState: useStateHero, useCallback: useCallbackHero } = React;
 
+function bangaloreClock() {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const ist = new Date(utc + (5.5 * 60 * 60 * 1000));
+  const h = ist.getHours();
+  const m = String(ist.getMinutes()).padStart(2, "0");
+  const ampm = h < 12 ? "AM" : "PM";
+  const hh = String(((h + 11) % 12) + 1).padStart(2, "0");
+  let greeting;
+  if (h >= 5 && h < 12) greeting = "Good morning";
+  else if (h >= 12 && h < 17) greeting = "Good afternoon";
+  else if (h >= 17 && h < 21) greeting = "Good evening";
+  else greeting = "Burning the midnight oil";
+  return { time: `${hh}:${m} ${ampm}`, greeting };
+}
+
 /* ============================================================
    Hero — minimal mono headline with subtle personality.
    - One typeface (JetBrains Mono), one weight.
@@ -37,6 +53,11 @@ function tokenize(s) {
 
 function Hero({ animation = "wave" }) {
   const textRef = useRefHero(null);
+  const [clock, setClock] = useStateHero(() => bangaloreClock());
+  useEffectHero(() => {
+    const id = setInterval(() => setClock(bangaloreClock()), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
 
   // Subtle wave on hover — every char shifts by 1–2px in a soft sine.
   const handleEnter = useCallbackHero(() => {
@@ -57,10 +78,10 @@ function Hero({ animation = "wave" }) {
   const tokens = tokenize(HEADLINE);
 
   return (
-    <section id="hero" className="hero" data-screen-label="01 Hero" style={{ padding: "140px 0px 56.4667px" }}>
+    <section id="hero" className="hero" data-screen-label="01 Hero">
       <div className="hero-eyebrow">
         <span className="dash"></span>
-        <span>Portfolio · ’26 · Bangalore</span>
+        <span>{clock.greeting} · Bangalore · <span className="clock-time">{clock.time}</span></span>
         <span className="blink"></span>
       </div>
 
@@ -68,7 +89,7 @@ function Hero({ animation = "wave" }) {
         className="intro-text"
         ref={textRef}
         onMouseEnter={handleEnter}
-        aria-label={HEADLINE + "."} style={{ fontFamily: "Roboto", letterSpacing: "3.5px", borderWidth: "0px", borderStyle: "solid", margin: "0px", padding: "80400px", textAlign: "right", height: "440px", width: "620px", lineHeight: "1.1" }}>
+        aria-label={HEADLINE + "."}>
         
         {tokens.map((tok, i) => {
           if (tok.m === "s") {
@@ -95,7 +116,7 @@ function Hero({ animation = "wave" }) {
         <span className="period" aria-hidden="true"></span>
       </h1>
 
-      <p className="hero-sub" style={{ margin: "44px 48px 0px 8px" }}>
+      <p className="hero-sub">
         I help teams design <em>thoughtful, opinionated</em> products in fintech,
         mobility and consumer. Strategy first. Pixel-stubborn second.
       </p>
@@ -123,7 +144,7 @@ function Hero({ animation = "wave" }) {
       </div>
 
       <div className="scroll-cue" aria-hidden="true">
-        <span>Keep going</span>
+        <span>Keep scrolling</span>
       </div>
     </section>);
 
