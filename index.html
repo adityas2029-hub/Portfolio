@@ -818,7 +818,16 @@ section {
   position: relative;
   -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
           mask-image: linear-gradient(180deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  /* JS toggles .cols-1 at the 900px breakpoint — opacity crossfade plays
+     first so the grid-column snap is invisible at any viewport width */
+  transition: opacity 260ms ease, height 480ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
+.brand-marquee.cols-1 {
+  grid-template-columns: 1fr;
+  height: clamp(560px, 120vh, 1000px);
+}
+.brand-marquee.cols-1 .brand-col.col-2,
+.brand-marquee.cols-1 .brand-col.col-3 { display: none; }
 .brand-col {
   display: flex; flex-direction: column;
   gap: clamp(16px, 2vw, 28px);
@@ -1758,16 +1767,7 @@ section:not(#hero).revealed .section-head {
   }
   .section-head .meta { text-align: left; }
 
-  /* Brand 3-col marquee → single column, shorter container.
-     Auto-scroll still runs but only on one track. */
-  .brand-marquee {
-    grid-template-columns: 1fr !important;
-    height: clamp(560px, 120vh, 1000px);
-  }
-  .brand-marquee .brand-col.col-2,
-  .brand-marquee .brand-col.col-3 { display: none; }
-
-  /* Strip cards: snap to viewport width, no awkward 480px overflow */
+  /* Strip cards: snap to viewport width on narrow screens */
   .collage-card-large {
     width: clamp(280px, 84vw, 420px);
     height: clamp(440px, 80vh, 600px);
@@ -2526,7 +2526,7 @@ Object.assign(window, { Work });
 
 <!-- ── Collage ────────────────────────────────────────────────── -->
 <script type="text/babel">
-const { useRef: useRefCol, useEffect: useEffectCol, useState: useStateCol } = React;
+const { useRef: useRefCol, useEffect: useEffectCol } = React;
 
 /* Brand portfolio items. Each one renders as a brutalist mono SVG (ArtSwatch)
    so the section reads as a coherent gallery — consistent palette, consistent
@@ -2766,122 +2766,39 @@ function CollageThumb({ item }) {
 }
 
 function Collage() {
-  const trackRef = useRefCol(null);
   const gridRef = useRefCol(null);
-  const [progress, setProgress] = useStateCol(0);
-  const [paused, setPaused] = useStateCol(false);
-  const [view, setView] = useStateCol("grid"); // 'grid' (default, auto-scrolls) | 'strip'
-  const dragState = useRefCol({ active: false, startX: 0, startLeft: 0, moved: 0 });
 
-  // Auto-scroll loop only when in strip view
+  // Arm brand-marquee entrance animation when the section scrolls into view
   useEffectCol(() => {
-    if (view !== "strip") return undefined;
-    const el = trackRef.current;
-    if (!el) return undefined;
-    let raf = 0, last = performance.now();
-    const tick = (now) => {
-      const dt = now - last; last = now;
-      if (!paused && !dragState.current.active) {
-        const max = el.scrollWidth - el.clientWidth;
-        if (max > 0) {
-          let next = el.scrollLeft + (dt / 1000) * 30;
-          if (next >= max - 1) next = 0;
-          el.scrollLeft = next;
-        }
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [paused, view]);
+    const el = gridRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("armed"); obs.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
-  // Drag-to-scroll only for strip view
+  // Smooth 3-col ↔ 1-col transition: opacity crossfade before the grid snaps.
+  // matchMedia fires when the breakpoint is crossed at any viewport width —
+  // desktop resize included — so there is never a visible layout jump.
   useEffectCol(() => {
-    if (view !== "strip") return undefined;
-    const el = trackRef.current;
-    if (!el) return undefined;
-    const onDown = (e) => {
-      dragState.current = { active: true, startX: e.touches ? e.touches[0].clientX : e.clientX, startLeft: el.scrollLeft, moved: 0 };
-      el.classList.add("dragging"); setPaused(true);
+    const el = gridRef.current;
+    if (!el) return;
+    const mq = window.matchMedia("(max-width: 900px)");
+    const apply = (mobile, instant) => {
+      if (instant) { el.classList.toggle("cols-1", mobile); return; }
+      el.style.opacity = "0";
+      setTimeout(() => {
+        el.classList.toggle("cols-1", mobile);
+        requestAnimationFrame(() => { el.style.opacity = ""; });
+      }, 260);
     };
-    const onMove = (e) => {
-      if (!dragState.current.active) return;
-      const x = e.touches ? e.touches[0].clientX : e.clientX;
-      const dx = x - dragState.current.startX;
-      dragState.current.moved = Math.abs(dx);
-      el.scrollLeft = dragState.current.startLeft - dx;
-      if (e.cancelable && e.touches) e.preventDefault();
-    };
-    const onUp = () => {
-      if (!dragState.current.active) return;
-      dragState.current.active = false;
-      el.classList.remove("dragging");
-      if (dragState.current.moved > 4) {
-        el.querySelectorAll(".collage-card").forEach((c) => (c.style.pointerEvents = "none"));
-        setTimeout(() => el.querySelectorAll(".collage-card").forEach((c) => (c.style.pointerEvents = "")), 50);
-      }
-    };
-    el.addEventListener("mousedown", onDown);
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    el.addEventListener("touchstart", onDown, { passive: true });
-    el.addEventListener("touchmove", onMove, { passive: false });
-    el.addEventListener("touchend", onUp);
-    return () => {
-      el.removeEventListener("mousedown", onDown);
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
-  }, [view]);
-
-  // Per-view: progress for the strip; "armed" gate for the brand marquee so
-  // the column entrance + vertical auto-scroll only kick in when the brand
-  // section enters the viewport (not on page load, deep above the fold).
-  useEffectCol(() => {
-    const cleanups = [];
-
-    if (view === "strip") {
-      const el = trackRef.current;
-      if (el) {
-        const onScroll = () => {
-          const max = el.scrollWidth - el.clientWidth;
-          setProgress(max > 0 ? el.scrollLeft / max : 0);
-        };
-        el.addEventListener("scroll", onScroll, { passive: true });
-        cleanups.push(() => el.removeEventListener("scroll", onScroll));
-      }
-      // Strip-view: per-card fade-up when each scrolls into view.
-      const obs = new IntersectionObserver((entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            const idx = Number(e.target.getAttribute("data-i") || 0);
-            setTimeout(() => e.target.classList.add("in"), idx * 60);
-            obs.unobserve(e.target);
-          }
-        });
-      }, { threshold: 0.12 });
-      el?.querySelectorAll(".collage-card").forEach((card) => obs.observe(card));
-      cleanups.push(() => obs.disconnect());
-    } else {
-      // Grid-view: arm the brand marquee when it enters the viewport.
-      const container = gridRef.current;
-      if (container) {
-        const obs = new IntersectionObserver((entries) => {
-          entries.forEach((e) => {
-            if (e.isIntersecting) {
-              e.target.classList.add("armed");
-              obs.unobserve(e.target);
-            }
-          });
-        }, { threshold: 0.1 });
-        obs.observe(container);
-        cleanups.push(() => obs.disconnect());
-      }
-    }
-    return () => cleanups.forEach((c) => c());
-  }, [view]);
-
-  const scrollBy = (dx) => trackRef.current?.scrollBy({ left: dx, behavior: "smooth" });
+    apply(mq.matches, true);
+    const handler = (e) => apply(e.matches, false);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   return (
     <section id="collage" data-screen-label="03 Brand">
@@ -2890,115 +2807,36 @@ function Collage() {
           <span className="num" style={{ color: "var(--accent)" }}>§ 03 / Brand</span>
           <h2><LetterReveal text="Side things, marks & posters" /></h2>
         </div>
-        <div className="meta" style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <span>{COLLAGE.length} works · {view === "strip" ? "scroll →" : "3-col grid"}</span>
-          <div className="collage-view-toggle" role="group" aria-label="View mode">
-            <button
-              type="button"
-              aria-pressed={view === "strip"}
-              aria-label="Horizontal strip view"
-              onClick={() => setView("strip")}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <rect x="3" y="8" width="6" height="8" />
-                <rect x="11" y="8" width="6" height="8" />
-                <rect x="19" y="8" width="6" height="8" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              aria-pressed={view === "grid"}
-              aria-label="3-column grid view"
-              onClick={() => setView("grid")}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <rect x="3" y="3" width="5" height="5" />
-                <rect x="10" y="3" width="5" height="5" />
-                <rect x="17" y="3" width="5" height="5" />
-                <rect x="3" y="10" width="5" height="5" />
-                <rect x="10" y="10" width="5" height="5" />
-                <rect x="17" y="10" width="5" height="5" />
-              </svg>
-            </button>
-          </div>
+        <div className="meta">
+          <span>{COLLAGE.length} works · 2022 — 2025</span>
         </div>
       </div>
 
-      {view === "strip" ? (
-        /* Single-line strip — bigger cards, each carrying name + a catchy
-           tagline. Horizontal scroller with auto-pace + drag. */
-        <div className="collage-wrap collage-wrap-strip"
-             onMouseEnter={() => setPaused(true)}
-             onMouseLeave={() => setPaused(false)}>
-          <div className="collage-track" ref={trackRef}>
-            {COLLAGE.map((it, i) => (
-              <article key={it.id} className="collage-card collage-card-large" data-i={i}>
-                <div className="thumb">
-                  <CollageThumb item={it} />
-                </div>
-                <div className="meta-block">
-                  <div className="meta-row">
+      <div className="brand-marquee" ref={gridRef}>
+        {[0, 1, 2].map((colIdx) => {
+          const colItems = COLLAGE.filter((_, i) => i % 3 === colIdx);
+          return (
+            <div key={colIdx} className={`brand-col col-${colIdx + 1}`}>
+              {[...colItems, ...colItems].map((it, j) => (
+                <article key={`${colIdx}-${j}`} className="collage-card brand-card">
+                  <div className="thumb">
+                    <CollageThumb item={it} />
+                  </div>
+                  <div className="meta">
                     <span className="name">{it.name}</span>
                     <span className="yr">{it.cat} · '{it.year}</span>
                   </div>
-                  <p className="tagline">{it.tag}</p>
-                </div>
-                <div className="reveal" aria-hidden="true">
-                  <span className="reveal-cat">{it.cat} · {it.year}</span>
-                  <span className="reveal-name">{it.name}</span>
-                  <span className="reveal-arrow">↗</span>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="brand-marquee" ref={gridRef}>
-          {[0, 1, 2].map((colIdx) => {
-            /* Distribute 12 items across 3 columns (4 each) by stride so adjacent
-               columns get visually different mixes (identity / poster / editorial …) */
-            const colItems = COLLAGE.filter((_, i) => i % 3 === colIdx);
-            return (
-              <div key={colIdx} className={`brand-col col-${colIdx + 1}`}>
-                {/* Items duplicated so the keyframe -50% translateY loops seamlessly */}
-                {[...colItems, ...colItems].map((it, j) => (
-                  <article key={`${colIdx}-${j}`} className="collage-card brand-card">
-                    <div className="thumb">
-                      <CollageThumb item={it} />
-                    </div>
-                    <div className="meta">
-                      <span className="name">{it.name}</span>
-                      <span className="yr">{it.cat} · '{it.year}</span>
-                    </div>
-                    <div className="reveal" aria-hidden="true">
-                      <span className="reveal-cat">{it.cat} · {it.year}</span>
-                      <span className="reveal-name">{it.name}</span>
-                      <span className="reveal-arrow">↗</span>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {view === "strip" && (
-        <div className="collage-controls">
-          <span>// Auto-scrolls · drag to grab · or use arrows</span>
-          <div className="collage-progress">
-            <div className="bar" style={{ width: `${Math.max(8, progress * 100)}%` }} />
-          </div>
-          <div className="collage-arrows">
-            <button onClick={() => scrollBy(-400)} aria-label="Previous">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
-            </button>
-            <button onClick={() => scrollBy(400)} aria-label="Next">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-            </button>
-          </div>
-        </div>
-      )}
+                  <div className="reveal" aria-hidden="true">
+                    <span className="reveal-cat">{it.cat} · {it.year}</span>
+                    <span className="reveal-name">{it.name}</span>
+                    <span className="reveal-arrow">↗</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }
