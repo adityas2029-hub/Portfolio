@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>ADI UIXUX — product, systems, experience.</title>
 <meta name="description" content="Adi — product, systems and experience designer. Bangalore." />
+<!-- Apply saved theme before first paint so loader + page always match -->
+<script>
+(function(){
+  var stored = localStorage.getItem("adi-theme");
+  var mode   = localStorage.getItem("adi-theme-mode") || "auto";
+  var theme  = stored === "light" || stored === "dark" ? stored
+             : mode === "dark" ? "dark"
+             : mode === "light" ? "light"
+             : window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", theme);
+})();
+</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -840,21 +852,42 @@ section {
 }
 .brand-marquee.cols-1 .brand-col.col-2,
 .brand-marquee.cols-1 .brand-col.col-3 { display: none; }
-.brand-nav {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-top: 24px;
-  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
-  font-family: var(--font-mono); color: var(--muted);
+/* Brand view toggle — sits in the section-head meta row */
+.brand-toggle {
+  display: flex; gap: 2px;
 }
-.brand-nav-arrows { display: flex; gap: 8px; }
-.brand-nav-btn {
-  width: 40px; height: 40px; border: 1px solid var(--line);
-  display: grid; place-items: center;
+.brand-toggle button {
+  width: 32px; height: 32px; border: 1px solid var(--line);
+  display: grid; place-items: center; color: var(--muted);
   transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
-.brand-nav-btn:hover { background: var(--fg); color: var(--bg); border-color: var(--fg); }
-.brand-marquee.slow .brand-col {
-  animation-duration: 120s !important;
+.brand-toggle button:hover { border-color: var(--fg); color: var(--fg); }
+.brand-toggle button.active { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+/* Strip (horizontal scroll) view */
+.collage-strip {
+  display: flex; gap: clamp(14px, 2vw, 22px);
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  /* hide scrollbar */
+  scrollbar-width: none;
+}
+.collage-strip::-webkit-scrollbar { display: none; }
+.collage-strip:active { cursor: grabbing; }
+.collage-strip .brand-card {
+  flex: 0 0 clamp(220px, 28vw, 340px) !important;
+  height: clamp(280px, 40vw, 440px) !important;
+  aspect-ratio: unset !important;
+  scroll-snap-align: start;
+  opacity: 1 !important; transform: none !important;
+}
+
+.brand-nav {
+  margin-top: 16px;
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
 }
 .brand-col {
   display: flex; flex-direction: column;
@@ -1694,78 +1727,68 @@ body.grid-mode .grid-overlay { opacity: 1; }
 }
 
 /* ============================================================
-   ABOUT SECTION
+   ABOUT SECTION — clean, single-column, brutalist
    ============================================================ */
-.about-body {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(40px, 8vw, 120px);
-  align-items: start;
-}
-.about-statement {
+.about-lead {
   font-family: var(--font-sans);
-  font-size: clamp(32px, 4.8vw, 72px);
-  font-weight: 450;
-  line-height: 1.06;
-  letter-spacing: -0.035em;
-  margin: 0;
-  max-width: 16ch;
+  font-size: clamp(28px, 4vw, 60px);
+  font-weight: 450; line-height: 1.08; letter-spacing: -0.03em;
+  margin: 0 0 clamp(48px, 8vw, 96px);
+  max-width: 22ch;
 }
-.about-statement em {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-weight: 400;
-  font-size: 1.06em;
-  letter-spacing: -0.015em;
-  color: var(--accent);
+.about-lead em {
+  font-family: var(--font-display); font-style: italic;
+  font-weight: 400; color: var(--accent); font-size: 1.06em;
 }
-.about-details { display: flex; flex-direction: column; gap: 36px; }
-.about-block { display: flex; flex-direction: column; gap: 12px; }
-.about-block .block-label {
-  font-family: var(--font-mono);
-  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--muted);
+.about-rows {
+  display: flex; flex-direction: column;
+  border-top: 1px solid var(--line);
 }
-.about-block .block-body {
-  font-size: 15px; line-height: 1.6; color: var(--fg);
-  max-width: 48ch;
+.about-row {
+  display: grid;
+  grid-template-columns: clamp(100px, 18%, 180px) 1fr;
+  gap: clamp(24px, 4vw, 64px);
+  padding: clamp(20px, 3vw, 32px) 0;
+  border-bottom: 1px solid var(--line);
+  align-items: baseline;
 }
-.about-process {
-  list-style: none; margin: 0; padding: 0;
-  display: flex; flex-direction: column; gap: 10px;
+.about-row-label {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+  padding-top: 3px;
 }
-.about-process li {
-  display: flex; gap: 16px; align-items: baseline;
-  font-size: 14px; line-height: 1.5; border-bottom: 1px solid var(--line);
-  padding-bottom: 10px;
+.about-row-value {
+  font-size: clamp(14px, 1.1vw, 16px); line-height: 1.6; color: var(--fg);
 }
-.about-process li:last-child { border-bottom: 0; padding-bottom: 0; }
-.about-process .step-num {
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
-  color: var(--accent); flex: 0 0 28px;
+.about-row-value strong { font-weight: 600; }
+.about-row-value em {
+  font-family: var(--font-display); font-style: italic; color: var(--accent);
 }
-.about-tools { display: flex; flex-wrap: wrap; gap: 6px; }
-.about-tool {
-  font-family: var(--font-mono); font-size: 11px;
+.about-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.about-tag {
+  font-family: var(--font-mono); font-size: 10px;
   letter-spacing: 0.08em; text-transform: uppercase;
   border: 1px solid var(--line); padding: 4px 10px;
   transition: border-color var(--transition), color var(--transition);
 }
-.about-tool:hover { border-color: var(--accent); color: var(--accent); }
-/* Stats strip — grounded baseline separating the two-col layout from numbers */
-.about-stats {
+.about-tag:hover { border-color: var(--fg); color: var(--fg); }
+.about-nums {
   display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 24px; margin-top: clamp(48px, 8vw, 80px);
-  padding-top: clamp(32px, 5vh, 48px); border-top: 1px solid var(--line);
+  gap: 0; margin-top: clamp(48px, 8vw, 80px);
+  border-top: 1px solid var(--line); border-left: 1px solid var(--line);
 }
-.stat { display: flex; flex-direction: column; gap: 6px; }
-.stat .stat-num {
+.about-num {
+  padding: clamp(20px, 3vw, 32px);
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.about-num-val {
   font-family: var(--font-mono);
-  font-size: clamp(28px, 3.6vw, 48px); font-weight: 500;
+  font-size: clamp(24px, 3.2vw, 44px); font-weight: 500;
   line-height: 1; letter-spacing: -0.04em;
 }
-.stat .stat-num .acc { color: var(--accent); }
-.stat .stat-label {
+.about-num-val .acc { color: var(--accent); }
+.about-num-lbl {
   font-family: var(--font-mono); font-size: 10px;
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
 }
@@ -1785,14 +1808,6 @@ section:not(#hero) .section-head {
 section:not(#hero).revealed .section-head {
   opacity: 1; transform: translateY(0);
 }
-section:not(#hero) .section-head::before {
-  content: "";
-  position: absolute; left: 0; top: -1px;
-  width: 0%; height: 1px;
-  background: var(--accent);
-  transition: width 680ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms;
-}
-section:not(#hero).revealed .section-head::before { width: 100%; }
 
 /* ============================================================
    RESPONSIVE
@@ -1841,9 +1856,9 @@ section:not(#hero).revealed .section-head::before { width: 100%; }
   /* Hero subhead — tighter so it sits closer to the headline on phones */
   .hero-sub { margin-top: clamp(20px, 4vw, 28px); }
 
-  /* About section — stack on mobile */
-  .about-body { grid-template-columns: 1fr; gap: 40px; }
-  .about-stats { grid-template-columns: 1fr 1fr; gap: 20px 32px; }
+  /* About section — stack numbers 2-col on mobile */
+  .about-nums { grid-template-columns: 1fr 1fr; }
+  .about-row { grid-template-columns: 1fr; gap: 8px; }
 }
 @media (max-width: 560px) {
   /* Collage grid view: single column */
@@ -1907,7 +1922,7 @@ section:not(#hero).revealed .section-head::before { width: 100%; }
 .loader-progress-wrap {
   width: clamp(180px, 40vw, 320px);
   height: 2px;
-  background: rgba(242,237,227,0.18);
+  background: var(--line);
   position: relative;
   overflow: hidden;
 }
@@ -2640,7 +2655,7 @@ Object.assign(window, { Work });
 
 <!-- ── Collage ────────────────────────────────────────────────── -->
 <script type="text/babel">
-const { useRef: useRefCol, useEffect: useEffectCol, useState: useStateCol } = React;
+const { useRef: useRefCol, useEffect: useEffectCol, useState: useStateCol, useCallback: useCallbackCol } = React;
 
 /* Brand portfolio items. Each one renders as a brutalist mono SVG (ArtSwatch)
    so the section reads as a coherent gallery — consistent palette, consistent
@@ -2880,39 +2895,89 @@ function CollageThumb({ item }) {
 }
 
 function Collage() {
-  const gridRef = useRefCol(null);
+  const gridRef  = useRefCol(null);
+  const trackRef = useRefCol(null);
+  const [view, setView] = useStateCol("grid"); // "grid" | "strip"
+  const dragState = useRefCol({ active: false, startX: 0, startLeft: 0 });
 
-  // Arm brand-marquee entrance animation when the section scrolls into view
+  // --- Grid view: arm entrance animation on viewport entry ---
   useEffectCol(() => {
+    if (view !== "grid") return;
     const el = gridRef.current;
     if (!el) return;
+    if (el.classList.contains("armed")) return;
     const obs = new IntersectionObserver((entries) => {
       entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("armed"); obs.unobserve(e.target); } });
     }, { threshold: 0.1 });
     obs.observe(el);
     return () => obs.disconnect();
-  }, []);
+  }, [view]);
 
-  // Smooth 3-col ↔ 1-col transition: opacity crossfade before the grid snaps.
-  // matchMedia fires when the breakpoint is crossed at any viewport width —
-  // desktop resize included — so there is never a visible layout jump.
+  // --- Grid view: responsive 3-col → 1-col with opacity crossfade ---
   useEffectCol(() => {
+    if (view !== "grid") return;
     const el = gridRef.current;
     if (!el) return;
     const mq = window.matchMedia("(max-width: 900px)");
     const apply = (mobile, instant) => {
       if (instant) { el.classList.toggle("cols-1", mobile); return; }
       el.style.opacity = "0";
-      setTimeout(() => {
-        el.classList.toggle("cols-1", mobile);
-        requestAnimationFrame(() => { el.style.opacity = ""; });
-      }, 260);
+      setTimeout(() => { el.classList.toggle("cols-1", mobile); requestAnimationFrame(() => { el.style.opacity = ""; }); }, 260);
     };
     apply(mq.matches, true);
     const handler = (e) => apply(e.matches, false);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
+  }, [view]);
+
+  // --- Strip view: drag-to-scroll ---
+  useEffectCol(() => {
+    if (view !== "strip") return;
+    const el = trackRef.current;
+    if (!el) return;
+    const onDown = (e) => {
+      dragState.current = { active: true, startX: e.touches ? e.touches[0].clientX : e.clientX, startLeft: el.scrollLeft };
+      el.style.cursor = "grabbing";
+    };
+    const onMove = (e) => {
+      if (!dragState.current.active) return;
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      el.scrollLeft = dragState.current.startLeft - (x - dragState.current.startX);
+      if (e.cancelable && e.touches) e.preventDefault();
+    };
+    const onUp = () => { dragState.current.active = false; el.style.cursor = ""; };
+    el.addEventListener("mousedown", onDown);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    el.addEventListener("touchstart", onDown, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onUp);
+    return () => {
+      el.removeEventListener("mousedown", onDown);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [view]);
+
+  const switchView = useCallbackCol((next) => {
+    setView(next);
   }, []);
+
+  /* Shared card renderer */
+  const renderCard = (it, key) => (
+    <article key={key} className="collage-card brand-card">
+      <div className="thumb"><CollageThumb item={it} /></div>
+      <div className="meta">
+        <span className="name">{it.name}</span>
+        <span className="yr">{it.cat} · '{it.year}</span>
+      </div>
+      <div className="reveal" aria-hidden="true">
+        <span className="reveal-cat">{it.cat} · '{it.year}</span>
+        <span className="reveal-tag">{it.tag}</span>
+        <span className="reveal-arrow">↗</span>
+      </div>
+    </article>
+  );
 
   return (
     <section id="collage" data-screen-label="03 Brand">
@@ -2921,48 +2986,58 @@ function Collage() {
           <span className="num" style={{ color: "var(--accent)" }}>§ 03 / Brand</span>
           <h2><LetterReveal text="Side things, marks & posters" /></h2>
         </div>
-        <div className="meta">
+        <div className="meta" style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <span>{COLLAGE.length} works · 2022 — 2025</span>
+          <div className="brand-toggle" role="group" aria-label="View mode">
+            <button
+              type="button"
+              className={view === "strip" ? "active" : ""}
+              aria-pressed={view === "strip"}
+              aria-label="Horizontal strip"
+              onClick={() => switchView("strip")}
+              title="Horizontal scroll"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="2" y="7" width="6" height="10" rx="1" /><rect x="9" y="7" width="6" height="10" rx="1" /><rect x="16" y="7" width="6" height="10" rx="1" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className={view === "grid" ? "active" : ""}
+              aria-pressed={view === "grid"}
+              aria-label="3-column vertical grid"
+              onClick={() => switchView("grid")}
+              title="3-column grid"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="3" y="3" width="7" height="18" rx="1" /><rect x="12" y="3" width="4" height="18" rx="1" /><rect x="17" y="3" width="4" height="18" rx="1" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="brand-marquee" ref={gridRef}>
-        {[0, 1, 2].map((colIdx) => {
-          const colItems = COLLAGE.filter((_, i) => i % 3 === colIdx);
-          return (
-            <div key={colIdx} className={`brand-col col-${colIdx + 1}`}>
-              {[...colItems, ...colItems].map((it, j) => (
-                <article key={`${colIdx}-${j}`} className="collage-card brand-card">
-                  <div className="thumb">
-                    <CollageThumb item={it} />
-                  </div>
-                  <div className="meta">
-                    <span className="name">{it.name}</span>
-                    <span className="yr">{it.cat} · '{it.year}</span>
-                  </div>
-                  <div className="reveal" aria-hidden="true">
-                    <span className="reveal-cat">{it.cat} · '{it.year}</span>
-                    <span className="reveal-tag">{it.tag}</span>
-                    <span className="reveal-arrow">↗</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          );
-        })}
-      </div>
-      <div className="brand-nav" aria-label="Brand navigation">
-        <span className="brand-nav-hint">// auto-scrolls · hover any card to pause</span>
-        <div className="brand-nav-arrows">
-          <button type="button" className="brand-nav-btn" aria-label="Slow scroll"
-            onClick={() => { const el = gridRef.current; if (el) { el.dataset.slow = el.dataset.slow === "1" ? "" : "1"; el.classList.toggle("slow", el.dataset.slow === "1"); } }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-          </button>
-          <button type="button" className="brand-nav-btn" aria-label="Scroll to section"
-            onClick={() => document.getElementById("about")?.scrollIntoView({ behavior: "smooth" })}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 5v14M5 13l7 7 7-7" /></svg>
-          </button>
+      {view === "strip" ? (
+        <div className="collage-strip" ref={trackRef}>
+          {COLLAGE.map((it) => renderCard(it, it.id))}
         </div>
+      ) : (
+        <div className="brand-marquee" ref={gridRef}>
+          {[0, 1, 2].map((colIdx) => {
+            const colItems = COLLAGE.filter((_, i) => i % 3 === colIdx);
+            return (
+              <div key={colIdx} className={`brand-col col-${colIdx + 1}`}>
+                {[...colItems, ...colItems].map((it, j) => renderCard(it, `${colIdx}-${j}`))}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="brand-nav" aria-hidden="true">
+        <span className="brand-nav-hint">
+          {view === "strip" ? "// drag to scroll" : "// auto-scrolls · hover to pause"}
+        </span>
       </div>
     </section>
   );
@@ -2981,65 +3056,62 @@ function About() {
           <span className="num" style={{ color: "var(--accent)" }}>§ 04 / About</span>
           <h2><LetterReveal text="7 years, zero filler" /></h2>
         </div>
-        <div className="meta"><div>7 years · Bangalore · Open to relocation</div></div>
+        <div className="meta"><span>Bangalore · Open to relocation</span></div>
       </div>
 
-      <div className="about-body">
-        {/* Left — the big opinionated statement */}
-        <h3 className="about-statement">
-          I design systems that think clearly and feel <em>inevitable</em>.
-        </h3>
+      <p className="about-lead">
+        I design systems that think clearly<br />and feel <em>inevitable</em>.
+      </p>
 
-        {/* Right — structured details */}
-        <div className="about-details">
-          <div className="about-block">
-            <span className="block-label">Philosophy</span>
-            <p className="block-body">
-              The most powerful design decisions happen before any pixel is touched —
-              in the research, the constraint mapping, the framing. I work strategy-first
-              and believe that opinionated design is kinder than ambiguous design.
-              If it doesn't provoke a reaction, it wasn't designed; it was assembled.
-            </p>
-          </div>
-
-          <div className="about-block">
-            <span className="block-label">How I work</span>
-            <ol className="about-process">
-              <li><span className="step-num">01 —</span><span>Understand the real problem, not the stated one.</span></li>
-              <li><span className="step-num">02 —</span><span>Map constraints and the tensions between them.</span></li>
-              <li><span className="step-num">03 —</span><span>Prototype the thinking before the interface.</span></li>
-              <li><span className="step-num">04 —</span><span>Ship with craft — the details carry the argument.</span></li>
-            </ol>
-          </div>
-
-          <div className="about-block">
-            <span className="block-label">Tools &amp; disciplines</span>
-            <div className="about-tools">
-              {["Figma", "FigJam", "Framer", "Principle", "Maze", "HTML/CSS", "React (this site)", "Service blueprints", "Design systems", "Product strategy"].map((t) => (
-                <span key={t} className="about-tool">{t}</span>
+      <div className="about-rows">
+        <div className="about-row">
+          <span className="about-row-label">Background</span>
+          <p className="about-row-value">
+            Seven years designing 0→1 products in fintech, mobility and consumer.
+            B.Des from MAHE Manipal, 2022. Based in Bangalore — open to on-site or remote.
+          </p>
+        </div>
+        <div className="about-row">
+          <span className="about-row-label">Approach</span>
+          <p className="about-row-value">
+            Strategy before screens. The strongest design decisions happen in the research and constraint-mapping phase — before any pixel is touched. <em>Opinionated</em> over ambiguous, every time.
+          </p>
+        </div>
+        <div className="about-row">
+          <span className="about-row-label">Currently</span>
+          <p className="about-row-value">
+            Open to lead and senior IC roles. Available from Q3 '26.<br />
+            Reading <em>The Design of Everyday Things</em>. Obsessed with service blueprints.
+          </p>
+        </div>
+        <div className="about-row">
+          <span className="about-row-label">With</span>
+          <div className="about-row-value">
+            <div className="about-tags">
+              {["Figma", "FigJam", "Framer", "Maze", "HTML · CSS", "React", "Service blueprints", "Design systems", "Product strategy"].map((t) => (
+                <span key={t} className="about-tag">{t}</span>
               ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Stats strip — numbers that anchor the narrative */}
-      <div className="about-stats">
-        <div className="stat">
-          <div className="stat-num">7<span className="acc">+</span></div>
-          <div className="stat-label">Years designing</div>
+      <div className="about-nums">
+        <div className="about-num">
+          <div className="about-num-val">7<span className="acc">+</span></div>
+          <div className="about-num-lbl">Years designing</div>
         </div>
-        <div className="stat">
-          <div className="stat-num">3</div>
-          <div className="stat-label">0→1 products shipped</div>
+        <div className="about-num">
+          <div className="about-num-val">3</div>
+          <div className="about-num-lbl">0→1 products shipped</div>
         </div>
-        <div className="stat">
-          <div className="stat-num">12<span className="acc">M</span></div>
-          <div className="stat-label">Users reached</div>
+        <div className="about-num">
+          <div className="about-num-val">12<span className="acc">M</span></div>
+          <div className="about-num-lbl">Users reached</div>
         </div>
-        <div className="stat">
-          <div className="stat-num">B<span className="acc">.</span>Des</div>
-          <div className="stat-label">MAHE Manipal · 2022</div>
+        <div className="about-num">
+          <div className="about-num-val">B<span className="acc">.</span>Des</div>
+          <div className="about-num-lbl">MAHE Manipal · 2022</div>
         </div>
       </div>
     </section>
@@ -3408,7 +3480,7 @@ const NAV_ITEMS = [
 const DEFAULTS = {
   heroAnimation: "wave",
   themeMode: "auto",
-  showOnboarding: true,
+  showOnboarding: false,
 };
 
 /* Floating cursor — a small ring + dot that follows the pointer with subtle
