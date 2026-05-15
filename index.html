@@ -364,6 +364,7 @@ section {
 }
 
 .section-head {
+  position: relative;
   display: flex; justify-content: space-between; align-items: baseline;
   margin-bottom: clamp(40px, 6vw, 72px); gap: 24px;
   border-top: 1px solid var(--line); padding-top: 24px;
@@ -704,6 +705,10 @@ section {
 .case .case-thumb .corner.tr { top: 8px; right: 8px; border-left: 0; border-bottom: 0; }
 .case .case-thumb .corner.bl { bottom: 8px; left: 8px; border-right: 0; border-top: 0; }
 .case .case-thumb .corner.br { bottom: 8px; right: 8px; border-left: 0; border-top: 0; }
+.case .case-thumb .corner {
+  transition: opacity 240ms ease, transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.case:hover .case-thumb .corner { opacity: 1; }
 .case .open-arrow {
   position: absolute; right: clamp(8px, 1.5vw, 20px); top: clamp(28px, 4vw, 44px);
   width: 44px; height: 44px; display: grid; place-items: center;
@@ -727,6 +732,13 @@ section {
   transform: translateX(-2px);
 }
 .case:hover .case-num { color: var(--accent); transform: translateX(-2px); }
+.case-num > div:first-child {
+  transition: color 220ms ease, letter-spacing 300ms ease;
+}
+.case:hover .case-num > div:first-child {
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
 
 /* ============================================================
    COLLAGE — two views: horizontal strip (default) + 3-column grid
@@ -828,6 +840,22 @@ section {
 }
 .brand-marquee.cols-1 .brand-col.col-2,
 .brand-marquee.cols-1 .brand-col.col-3 { display: none; }
+.brand-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 24px;
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  font-family: var(--font-mono); color: var(--muted);
+}
+.brand-nav-arrows { display: flex; gap: 8px; }
+.brand-nav-btn {
+  width: 40px; height: 40px; border: 1px solid var(--line);
+  display: grid; place-items: center;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.brand-nav-btn:hover { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.brand-marquee.slow .brand-col {
+  animation-duration: 120s !important;
+}
 .brand-col {
   display: flex; flex-direction: column;
   gap: clamp(16px, 2vw, 28px);
@@ -846,7 +874,7 @@ section {
 .brand-marquee.armed .brand-col.col-2 { animation-delay: 140ms, 1100ms; animation-duration: 900ms, 72s; }
 .brand-marquee.armed .brand-col.col-3 { animation-delay: 280ms, 1280ms; animation-duration: 900ms, 48s; }
 
-.brand-marquee:hover .brand-col {
+.brand-marquee:has(.brand-card:hover) .brand-col {
   animation-play-state: paused;
 }
 
@@ -920,6 +948,15 @@ section {
   font-family: var(--font-mono);
   font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
   opacity: 0.6;
+}
+.collage-card .reveal .reveal-tag {
+  font-family: var(--font-sans);
+  font-size: clamp(12px, 1vw, 14px);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+  opacity: 0.85;
+  max-width: 28ch;
 }
 .collage-card .reveal .reveal-arrow {
   position: absolute; right: clamp(14px, 2vw, 22px); top: 50%;
@@ -1075,6 +1112,18 @@ section {
   z-index: 0;
 }
 .method-tile > * { position: relative; z-index: 1; }
+.method-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--accent-ink);
+  transform: translateX(-101%);
+  transition: transform 360ms cubic-bezier(0.7, 0, 0.3, 1);
+  z-index: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+.method-tile:hover::after { transform: translateX(0); }
 .method-tile:hover { color: var(--accent); transform: translateY(-3px); }
 .method-tile:hover::before { transform: translateY(0); }
 .method-tile .tile-head {
@@ -1736,6 +1785,14 @@ section:not(#hero) .section-head {
 section:not(#hero).revealed .section-head {
   opacity: 1; transform: translateY(0);
 }
+section:not(#hero) .section-head::before {
+  content: "";
+  position: absolute; left: 0; top: -1px;
+  width: 0%; height: 1px;
+  background: var(--accent);
+  transition: width 680ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms;
+}
+section:not(#hero).revealed .section-head::before { width: 100%; }
 
 /* ============================================================
    RESPONSIVE
@@ -1817,6 +1874,56 @@ section:not(#hero).revealed .section-head {
   /* About stats: full column on very small phones */
   .about-stats { grid-template-columns: 1fr 1fr; }
 }
+
+/* ============================================================
+   LOADING SCREEN — brutalist intro, ~1.3s before site reveals
+   ============================================================ */
+#loader {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--fg);
+  color: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 32px;
+  transform: translateY(0);
+  transition: transform 540ms cubic-bezier(0.7, 0, 0.3, 1);
+  pointer-events: all;
+}
+#loader.exit { transform: translateY(-100%); pointer-events: none; }
+#loader.gone { display: none; }
+
+.loader-wordmark {
+  font-family: var(--font-mono);
+  font-size: clamp(48px, 14vw, 120px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  position: relative;
+  overflow: hidden;
+}
+.loader-wordmark .lw-accent {
+  color: var(--accent);
+}
+.loader-progress-wrap {
+  width: clamp(180px, 40vw, 320px);
+  height: 2px;
+  background: rgba(242,237,227,0.18);
+  position: relative;
+  overflow: hidden;
+}
+.loader-progress-bar {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: var(--bg);
+  width: 0%;
+  transition: width 1100ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.loader-label {
+  position: absolute; bottom: clamp(20px, 4vw, 40px); left: 0; right: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(242,237,227,0.4);
+}
 </style>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
@@ -1824,6 +1931,14 @@ section:not(#hero).revealed .section-head {
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
+<div id="loader" aria-hidden="true">
+  <div class="loader-wordmark">ADI<span class="lw-accent">·</span>UIXUX</div>
+  <div class="loader-progress-wrap">
+    <div class="loader-progress-bar" id="loader-bar"></div>
+  </div>
+  <span class="loader-label">Portfolio — 2026</span>
+</div>
+
 <div id="root"></div>
 
 <!-- ── Tweaks Panel ─────────────────────────────────────────── -->
@@ -2363,8 +2478,7 @@ function Hero({ animation = "wave" }) {
       </h1>
 
       <p className="hero-sub">
-        I help teams design <em>thoughtful, opinionated</em> products in fintech,
-        mobility and consumer. Strategy first. Pixel-stubborn second.
+        Product design at the intersection of <em>strategy, systems and craft</em>. I work 0→1 with teams in fintech, mobility and consumer — from blank doc to shipped product.
       </p>
 
       <div className="hero-footer">
@@ -2473,7 +2587,7 @@ function Work() {
       <div className="section-head">
         <div style={{ display: "flex", gap: 20, alignItems: "baseline" }}>
           <span className="num" style={{ color: "var(--accent)" }}>§ 02 / Work</span>
-          <h2><LetterReveal text="Three pieces I'd still ship today" /></h2>
+          <h2><LetterReveal text="Work that changed how things move" /></h2>
         </div>
         <div className="meta"><div>03 case studies · 2023 — 2025</div></div>
       </div>
@@ -2827,8 +2941,8 @@ function Collage() {
                     <span className="yr">{it.cat} · '{it.year}</span>
                   </div>
                   <div className="reveal" aria-hidden="true">
-                    <span className="reveal-cat">{it.cat} · {it.year}</span>
-                    <span className="reveal-name">{it.name}</span>
+                    <span className="reveal-cat">{it.cat} · '{it.year}</span>
+                    <span className="reveal-tag">{it.tag}</span>
                     <span className="reveal-arrow">↗</span>
                   </div>
                 </article>
@@ -2836,6 +2950,19 @@ function Collage() {
             </div>
           );
         })}
+      </div>
+      <div className="brand-nav" aria-label="Brand navigation">
+        <span className="brand-nav-hint">// auto-scrolls · hover any card to pause</span>
+        <div className="brand-nav-arrows">
+          <button type="button" className="brand-nav-btn" aria-label="Slow scroll"
+            onClick={() => { const el = gridRef.current; if (el) { el.dataset.slow = el.dataset.slow === "1" ? "" : "1"; el.classList.toggle("slow", el.dataset.slow === "1"); } }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </button>
+          <button type="button" className="brand-nav-btn" aria-label="Scroll to section"
+            onClick={() => document.getElementById("about")?.scrollIntoView({ behavior: "smooth" })}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 5v14M5 13l7 7 7-7" /></svg>
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -2852,7 +2979,7 @@ function About() {
       <div className="section-head">
         <div style={{ display: "flex", gap: 20, alignItems: "baseline" }}>
           <span className="num" style={{ color: "var(--accent)" }}>§ 04 / About</span>
-          <h2><LetterReveal text="The person behind the work" /></h2>
+          <h2><LetterReveal text="7 years, zero filler" /></h2>
         </div>
         <div className="meta"><div>7 years · Bangalore · Open to relocation</div></div>
       </div>
@@ -2947,7 +3074,7 @@ function Contact() {
       <div className="section-head">
         <div style={{ display: "flex", gap: 20, alignItems: "baseline" }}>
           <span className="num">§ 05 / Contact</span>
-          <h2><LetterReveal text="Say hello" /></h2>
+          <h2><LetterReveal text="Start a conversation" /></h2>
         </div>
         <div className="meta"><div>Replies within 24h · usually faster</div></div>
       </div>
@@ -3216,6 +3343,25 @@ function OnboardingBubbles({ enabled, replayKey }) {
 }
 
 Object.assign(window, { OnboardingBubbles });
+</script>
+
+<!-- ── Loader ─────────────────────────────────────────────────── -->
+<script>
+(function() {
+  document.body.style.overflow = "hidden";
+  const loader = document.getElementById("loader");
+  const bar = document.getElementById("loader-bar");
+  if (!loader || !bar) return;
+  // Kick off the progress bar fill immediately
+  requestAnimationFrame(() => { bar.style.width = "100%"; });
+  // At 1.2s, slide the loader off screen
+  setTimeout(() => {
+    loader.classList.add("exit");
+    document.body.style.overflow = "";
+    // After the slide animation (540ms), remove from paint
+    setTimeout(() => loader.classList.add("gone"), 560);
+  }, 1200);
+})();
 </script>
 
 <!-- ── App (root) ─────────────────────────────────────────────── -->
