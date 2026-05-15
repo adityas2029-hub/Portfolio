@@ -16,9 +16,7 @@
              : window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   document.documentElement.setAttribute("data-theme", theme);
 
-  /* Restore accessibility settings instantly to avoid layout shift */
-  var a11ySize = parseInt(localStorage.getItem("adi-a11y-size") || "100");
-  if (!isNaN(a11ySize) && a11ySize !== 100) document.documentElement.style.fontSize = a11ySize + "%";
+  /* Restore a11y colour and motion settings before first paint */
   var a11yColor = localStorage.getItem("adi-a11y-color");
   if (a11yColor && a11yColor !== "default") document.documentElement.setAttribute("data-color-mode", a11yColor);
   if (localStorage.getItem("adi-a11y-motion") === "1") document.documentElement.classList.add("reduce-motion");
@@ -1905,28 +1903,32 @@ body.site-ready .hero-sub    { animation: enter-up   620ms cubic-bezier(0.2, 0.7
 body.site-ready .hero-footer { animation: enter-up   560ms cubic-bezier(0.2, 0.7, 0.2, 1)  620ms both; }
 
 /* ── Accessibility Panel ─────────────────────────────────── */
+.a11y-wrap { position: relative; }
+
 .a11y-trigger {
-  position: fixed; bottom: 24px; left: 24px; z-index: 9000;
-  width: 40px; height: 40px;
-  border: 1.5px solid var(--fg); background: var(--bg); color: var(--fg);
+  width: 32px; height: 32px; padding: 0;
+  background: none; border: 1.5px solid transparent; color: var(--fg);
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; opacity: 0.5;
-  transition: opacity 240ms ease, background 240ms ease, color 240ms ease;
-  padding: 0; font-family: var(--font-mono);
+  cursor: pointer; opacity: 0.55;
+  transition: opacity 240ms ease, border-color 240ms ease, background 240ms ease, color 240ms ease;
 }
-.a11y-trigger:hover,
-.a11y-trigger[aria-expanded="true"] { opacity: 1; background: var(--fg); color: var(--bg); }
-.a11y-trigger svg { width: 18px; height: 18px; fill: currentColor; }
+.a11y-trigger:hover { opacity: 1; border-color: var(--fg); }
+.a11y-trigger[aria-expanded="true"] { opacity: 1; background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.a11y-trigger svg { width: 15px; height: 15px; }
+.topnav.on-accent .a11y-trigger { color: var(--accent-ink); }
+.topnav.on-accent .a11y-trigger:hover { border-color: var(--accent-ink); }
+.topnav.on-accent .a11y-trigger[aria-expanded="true"] { background: var(--accent-ink); color: var(--accent); border-color: var(--accent-ink); }
 
 .a11y-panel {
-  position: fixed; bottom: 72px; left: 24px; z-index: 8999;
-  width: 272px; background: var(--bg); border: 1.5px solid var(--fg);
+  position: absolute; top: calc(100% + 10px); right: 0; z-index: 9000;
+  width: 256px; background: var(--bg); border: 1.5px solid var(--fg);
   font-family: var(--font-mono); font-size: 11px;
-  transform-origin: bottom left; transform: scaleY(0); opacity: 0;
-  transition: transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 220ms ease;
+  transform-origin: top right;
+  transform: scale(0.92) translateY(-8px); opacity: 0;
+  transition: transform 260ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 200ms ease;
   pointer-events: none;
 }
-.a11y-panel.open { transform: scaleY(1); opacity: 1; pointer-events: auto; }
+.a11y-panel.open { transform: scale(1) translateY(0); opacity: 1; pointer-events: auto; }
 
 .a11y-panel-head {
   padding: 11px 14px; border-bottom: 1px solid var(--line);
@@ -1936,16 +1938,13 @@ body.site-ready .hero-footer { animation: enter-up   560ms cubic-bezier(0.2, 0.7
 .a11y-panel-close {
   background: none; border: none; color: var(--fg); cursor: pointer;
   font-family: var(--font-mono); font-size: 15px; line-height: 1; padding: 0 2px;
-  opacity: 0.6; transition: opacity 160ms ease;
+  opacity: 0.55; transition: opacity 160ms ease;
 }
 .a11y-panel-close:hover { opacity: 1; }
 
 .a11y-panel-body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
 .a11y-row { display: flex; flex-direction: column; gap: 7px; }
-.a11y-label {
-  font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase;
-  opacity: 0.5; font-weight: 600;
-}
+.a11y-label { font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase; opacity: 0.5; font-weight: 600; }
 
 .a11y-size-row { display: flex; align-items: center; border: 1px solid var(--line); }
 .a11y-size-btn {
@@ -1954,11 +1953,11 @@ body.site-ready .hero-footer { animation: enter-up   560ms cubic-bezier(0.2, 0.7
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: background 160ms ease, color 160ms ease;
 }
-.a11y-size-btn:hover { background: var(--fg); color: var(--bg); }
+.a11y-size-btn:hover:not(:disabled) { background: var(--fg); color: var(--bg); }
+.a11y-size-btn:disabled { opacity: 0.25; cursor: default; }
 .a11y-size-val {
   flex: 1; text-align: center; font-size: 11px; font-weight: 600;
-  border-left: 1px solid var(--line); border-right: 1px solid var(--line);
-  line-height: 32px;
+  border-left: 1px solid var(--line); border-right: 1px solid var(--line); line-height: 32px;
 }
 
 .a11y-color-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
@@ -1974,16 +1973,9 @@ body.site-ready .hero-footer { animation: enter-up   560ms cubic-bezier(0.2, 0.7
 .a11y-toggle-row { display: flex; align-items: center; justify-content: space-between; }
 .a11y-toggle { position: relative; width: 36px; height: 20px; cursor: pointer; flex-shrink: 0; }
 .a11y-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
-.a11y-toggle-track {
-  position: absolute; inset: 0;
-  border: 1.5px solid var(--fg); background: none;
-  transition: background 240ms ease;
-}
+.a11y-toggle-track { position: absolute; inset: 0; border: 1.5px solid var(--fg); background: none; transition: background 240ms ease; }
 .a11y-toggle input:checked ~ .a11y-toggle-track { background: var(--fg); }
-.a11y-toggle-thumb {
-  position: absolute; top: 3px; left: 3px; width: 10px; height: 10px;
-  background: var(--fg); transition: transform 240ms ease, background 240ms ease;
-}
+.a11y-toggle-thumb { position: absolute; top: 3px; left: 3px; width: 10px; height: 10px; background: var(--fg); transition: transform 240ms ease, background 240ms ease; }
 .a11y-toggle input:checked ~ .a11y-toggle-thumb { transform: translateX(16px); background: var(--bg); }
 
 .a11y-reset {
@@ -1993,6 +1985,15 @@ body.site-ready .hero-footer { animation: enter-up   560ms cubic-bezier(0.2, 0.7
   transition: background 160ms ease, color 160ms ease;
 }
 .a11y-reset:hover { background: var(--fg); color: var(--bg); }
+
+/* Mobile: detach from relative parent and anchor to viewport edge */
+@media (max-width: 600px) {
+  .a11y-panel {
+    position: fixed; top: 56px; right: 0; left: 0;
+    width: 100%; max-width: 360px; margin: 0 auto;
+    transform-origin: top center;
+  }
+}
 
 /* Colorblind simulation */
 html[data-color-mode="deuteranopia"] body { filter: url(#a11y-filter-deuteranopia); }
@@ -2316,7 +2317,114 @@ Object.assign(window, { useTheme, useScrollSpy, useToneBlend });
 
 <!-- ── Nav ───────────────────────────────────────────────────── -->
 <script type="text/babel">
-const { useState: useStateNav, useEffect: useEffectNav, useRef: useRefNav } = React;
+const { useState: useStateNav, useEffect: useEffectNav, useRef: useRefNav, useCallback: useCallbackNav } = React;
+
+/* ── Accessibility panel — inline in nav so it sits beside theme toggle ── */
+const A11Y_MODES = [
+  { id: "default",       label: "Default" },
+  { id: "deuteranopia",  label: "Deuter." },
+  { id: "protanopia",    label: "Protan." },
+  { id: "tritanopia",    label: "Tritan." },
+  { id: "grayscale",     label: "Greyscale" },
+  { id: "high-contrast", label: "Hi-Con." },
+];
+const A11Y_MIN = 80, A11Y_MAX = 160, A11Y_STEP = 10;
+
+function A11yPanel() {
+  const [open,    setOpen]    = useStateNav(false);
+  const [size,    setSize]    = useStateNav(() => { const v = parseInt(localStorage.getItem("adi-a11y-size") || "100"); return isNaN(v) ? 100 : v; });
+  const [color,   setColor]   = useStateNav(() => localStorage.getItem("adi-a11y-color") || "default");
+  const [motion,  setMotion]  = useStateNav(() => localStorage.getItem("adi-a11y-motion") === "1");
+  const wrapRef = useRefNav(null);
+
+  /* font size via body zoom — only way to scale px-based CSS */
+  useEffectNav(() => {
+    document.body.style.zoom = size === 100 ? "" : (size / 100).toFixed(3);
+    if (size === 100) localStorage.removeItem("adi-a11y-size");
+    else localStorage.setItem("adi-a11y-size", String(size));
+  }, [size]);
+
+  useEffectNav(() => {
+    if (color === "default") { document.documentElement.removeAttribute("data-color-mode"); localStorage.removeItem("adi-a11y-color"); }
+    else { document.documentElement.setAttribute("data-color-mode", color); localStorage.setItem("adi-a11y-color", color); }
+  }, [color]);
+
+  useEffectNav(() => {
+    document.documentElement.classList.toggle("reduce-motion", motion);
+    if (motion) localStorage.setItem("adi-a11y-motion", "1");
+    else localStorage.removeItem("adi-a11y-motion");
+  }, [motion]);
+
+  useEffectNav(() => {
+    if (!open) return;
+    const onDown = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  const reset = useCallbackNav(() => { setSize(100); setColor("default"); setMotion(false); }, []);
+
+  return (
+    <div ref={wrapRef} className="a11y-wrap">
+      <button
+        className="a11y-trigger"
+        aria-label="Accessibility options"
+        aria-expanded={String(open)}
+        aria-controls="a11y-panel"
+        title="Accessibility"
+        onClick={() => setOpen(v => !v)}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="square" aria-hidden="true">
+          <circle cx="12" cy="4.5" r="1.8" fill="currentColor" stroke="none"/>
+          <path d="M18 9H6l2 10h8l2-10zM12 14v7"/>
+        </svg>
+      </button>
+
+      <div id="a11y-panel" className={"a11y-panel" + (open ? " open" : "")} role="region" aria-label="Accessibility options">
+        <div className="a11y-panel-head">
+          <span>Accessibility</span>
+          <button className="a11y-panel-close" aria-label="Close" onClick={() => setOpen(false)}>×</button>
+        </div>
+        <div className="a11y-panel-body">
+
+          <div className="a11y-row">
+            <span className="a11y-label">Text size</span>
+            <div className="a11y-size-row">
+              <button className="a11y-size-btn" aria-label="Smaller" disabled={size <= A11Y_MIN}
+                onClick={() => setSize(v => Math.max(A11Y_MIN, v - A11Y_STEP))}>−</button>
+              <div className="a11y-size-val">{size}%</div>
+              <button className="a11y-size-btn" aria-label="Larger" disabled={size >= A11Y_MAX}
+                onClick={() => setSize(v => Math.min(A11Y_MAX, v + A11Y_STEP))}>+</button>
+            </div>
+          </div>
+
+          <div className="a11y-row">
+            <span className="a11y-label">Colour vision</span>
+            <div className="a11y-color-grid">
+              {A11Y_MODES.map(m => (
+                <button key={m.id} className={"a11y-color-btn" + (color === m.id ? " active" : "")}
+                  aria-pressed={color === m.id} onClick={() => setColor(m.id)}>{m.label}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="a11y-row">
+            <div className="a11y-toggle-row">
+              <span className="a11y-label" style={{opacity:1}}>Reduce motion</span>
+              <label className="a11y-toggle" aria-label="Reduce motion">
+                <input type="checkbox" checked={motion} onChange={e => setMotion(e.target.checked)} />
+                <div className="a11y-toggle-track"></div>
+                <div className="a11y-toggle-thumb"></div>
+              </label>
+            </div>
+          </div>
+
+          <button className="a11y-reset" onClick={reset}>Reset all</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* Magnetic hover — the element subtly pulls toward the cursor when hovered.
    Borrowed from Linear / Vercel / premium portfolios. Subtle on purpose
@@ -2393,6 +2501,7 @@ function TopNav({ onToggleTheme, themeMode, onCta }) {
         <a href="#about">About</a>
       </nav>
       <div className="topnav-right">
+        <A11yPanel />
         <button className="theme-toggle" onClick={onToggleTheme}
           aria-label={`Theme: ${themeMode}. Click to cycle.`}
           data-onboard="theme">
@@ -3514,165 +3623,6 @@ function OnboardingBubbles({ enabled, replayKey }) {
 Object.assign(window, { OnboardingBubbles });
 </script>
 
-<!-- ── Accessibility Panel ────────────────────────────────────── -->
-<script type="text/babel">
-const { useState: useStateA11y, useEffect: useEffectA11y, useRef: useRefA11y } = React;
-
-const A11Y_COLOR_MODES = [
-  { id: "default",       label: "Default" },
-  { id: "deuteranopia",  label: "Deuter." },
-  { id: "protanopia",    label: "Protan." },
-  { id: "tritanopia",    label: "Tritan." },
-  { id: "grayscale",     label: "Greyscale" },
-  { id: "high-contrast", label: "Hi-Con." },
-];
-const A11Y_FONT_MIN = 80, A11Y_FONT_MAX = 160, A11Y_FONT_STEP = 10;
-
-function AccessibilityPanel() {
-  const [open,         setOpen]         = useStateA11y(false);
-  const [fontSize,     setFontSize]     = useStateA11y(() => {
-    const v = parseInt(localStorage.getItem("adi-a11y-size") || "100");
-    return isNaN(v) ? 100 : v;
-  });
-  const [colorMode,    setColorMode]    = useStateA11y(() => localStorage.getItem("adi-a11y-color") || "default");
-  const [reduceMotion, setReduceMotion] = useStateA11y(() => localStorage.getItem("adi-a11y-motion") === "1");
-
-  const panelRef   = useRefA11y(null);
-  const triggerRef = useRefA11y(null);
-
-  useEffectA11y(() => {
-    document.documentElement.style.fontSize = fontSize + "%";
-    localStorage.setItem("adi-a11y-size", String(fontSize));
-  }, [fontSize]);
-
-  useEffectA11y(() => {
-    if (colorMode === "default") {
-      document.documentElement.removeAttribute("data-color-mode");
-      localStorage.removeItem("adi-a11y-color");
-    } else {
-      document.documentElement.setAttribute("data-color-mode", colorMode);
-      localStorage.setItem("adi-a11y-color", colorMode);
-    }
-  }, [colorMode]);
-
-  useEffectA11y(() => {
-    if (reduceMotion) {
-      document.documentElement.classList.add("reduce-motion");
-      localStorage.setItem("adi-a11y-motion", "1");
-    } else {
-      document.documentElement.classList.remove("reduce-motion");
-      localStorage.removeItem("adi-a11y-motion");
-    }
-  }, [reduceMotion]);
-
-  useEffectA11y(() => {
-    if (!open) return;
-    function onDown(e) {
-      if (
-        panelRef.current && !panelRef.current.contains(e.target) &&
-        triggerRef.current && !triggerRef.current.contains(e.target)
-      ) setOpen(false);
-    }
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [open]);
-
-  function reset() {
-    setFontSize(100);
-    setColorMode("default");
-    setReduceMotion(false);
-  }
-
-  return (
-    <>
-      <button
-        ref={triggerRef}
-        className="a11y-trigger"
-        aria-label="Accessibility options"
-        aria-expanded={String(open)}
-        aria-controls="a11y-panel"
-        onClick={() => setOpen(v => !v)}
-        title="Accessibility"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="4.5" r="1.8"/>
-          <path d="M18.5 8.5H5.5l2 10h9l2-10zM12 13.5v6" strokeWidth="1.4" stroke="currentColor" fill="none" strokeLinecap="square"/>
-        </svg>
-      </button>
-
-      <div
-        ref={panelRef}
-        id="a11y-panel"
-        className={"a11y-panel" + (open ? " open" : "")}
-        role="region"
-        aria-label="Accessibility options"
-      >
-        <div className="a11y-panel-head">
-          <span>Accessibility</span>
-          <button className="a11y-panel-close" aria-label="Close accessibility panel" onClick={() => setOpen(false)}>×</button>
-        </div>
-
-        <div className="a11y-panel-body">
-          {/* Text size */}
-          <div className="a11y-row">
-            <span className="a11y-label">Text size</span>
-            <div className="a11y-size-row">
-              <button
-                className="a11y-size-btn"
-                aria-label="Decrease text size"
-                onClick={() => setFontSize(v => Math.max(A11Y_FONT_MIN, v - A11Y_FONT_STEP))}
-                disabled={fontSize <= A11Y_FONT_MIN}
-              >−</button>
-              <div className="a11y-size-val">{fontSize}%</div>
-              <button
-                className="a11y-size-btn"
-                aria-label="Increase text size"
-                onClick={() => setFontSize(v => Math.min(A11Y_FONT_MAX, v + A11Y_FONT_STEP))}
-                disabled={fontSize >= A11Y_FONT_MAX}
-              >+</button>
-            </div>
-          </div>
-
-          {/* Colour vision */}
-          <div className="a11y-row">
-            <span className="a11y-label">Colour vision</span>
-            <div className="a11y-color-grid">
-              {A11Y_COLOR_MODES.map(m => (
-                <button
-                  key={m.id}
-                  className={"a11y-color-btn" + (colorMode === m.id ? " active" : "")}
-                  onClick={() => setColorMode(m.id)}
-                  aria-pressed={colorMode === m.id}
-                >{m.label}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* Reduce motion */}
-          <div className="a11y-row">
-            <div className="a11y-toggle-row">
-              <span style={{fontSize:"9px",letterSpacing:"0.13em",textTransform:"uppercase",fontWeight:600}}>Reduce motion</span>
-              <label className="a11y-toggle" aria-label="Reduce motion">
-                <input
-                  type="checkbox"
-                  checked={reduceMotion}
-                  onChange={e => setReduceMotion(e.target.checked)}
-                />
-                <div className="a11y-toggle-track"></div>
-                <div className="a11y-toggle-thumb"></div>
-              </label>
-            </div>
-          </div>
-
-          <button className="a11y-reset" onClick={reset}>Reset all</button>
-        </div>
-      </div>
-    </>
-  );
-}
-
-Object.assign(window, { AccessibilityPanel });
-</script>
 
 <!-- ── Loader ─────────────────────────────────────────────────── -->
 <script>
@@ -3734,8 +3684,7 @@ const _Collage         = window.Collage;
 const _About           = window.About;
 const _Contact         = window.Contact;
 const _Footer          = window.Footer;
-const _OnboardingBubbles  = window.OnboardingBubbles;
-const _AccessibilityPanel = window.AccessibilityPanel;
+const _OnboardingBubbles = window.OnboardingBubbles;
 const { TweaksPanel, TweakSection, TweakRadio, TweakToggle, TweakButton } = window;
 
 const NAV_ITEMS = [
@@ -4129,7 +4078,6 @@ function App() {
       <FloatingCursor />
       <GridReveal />
       <ScrollTop />
-      <_AccessibilityPanel />
       <KonamiEgg />
 
       <TweaksPanel title="Tweaks">
