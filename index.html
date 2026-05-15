@@ -3352,15 +3352,31 @@ Object.assign(window, { OnboardingBubbles });
   const loader = document.getElementById("loader");
   const bar = document.getElementById("loader-bar");
   if (!loader || !bar) return;
-  // Kick off the progress bar fill immediately
+
+  const startTime = Date.now();
+  const MIN_MS = 1300;
+
   requestAnimationFrame(() => { bar.style.width = "100%"; });
-  // At 1.2s, slide the loader off screen
-  setTimeout(() => {
+
+  function dismiss() {
     loader.classList.add("exit");
     document.body.style.overflow = "";
-    // After the slide animation (540ms), remove from paint
     setTimeout(() => loader.classList.add("gone"), 560);
-  }, 1200);
+  }
+
+  // Wait until React has painted content into #root, then respect MIN_MS
+  const root = document.getElementById("root");
+  const obs = new MutationObserver(() => {
+    if (root && root.children.length > 0) {
+      obs.disconnect();
+      const wait = Math.max(0, MIN_MS - (Date.now() - startTime));
+      setTimeout(dismiss, wait);
+    }
+  });
+  if (root) obs.observe(root, { childList: true, subtree: false });
+
+  // Hard fallback — never block the user beyond 5s
+  setTimeout(() => { obs.disconnect(); dismiss(); }, 5000);
 })();
 </script>
 
