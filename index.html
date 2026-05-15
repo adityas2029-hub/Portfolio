@@ -1072,31 +1072,19 @@ section {
   background: transparent;
   color: var(--accent-ink);
   overflow: hidden;
-  transition: background 380ms ease, color 380ms ease, transform 520ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition: color 480ms ease;
   min-height: 200px;
 }
 .method-tile::before {
   content: ""; position: absolute; inset: 0;
   background: var(--accent-ink);
   transform: translateY(101%);
-  transition: transform 520ms cubic-bezier(0.7, 0, 0.2, 1);
+  transition: transform 480ms cubic-bezier(0.7, 0, 0.2, 1);
   z-index: 0;
 }
 .method-tile > * { position: relative; z-index: 1; }
-.method-tile::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--accent-ink);
-  transform: translateX(-101%);
-  transition: transform 360ms cubic-bezier(0.7, 0, 0.3, 1);
-  z-index: 0;
-  pointer-events: none;
-  mix-blend-mode: multiply;
-}
-.method-tile:hover::after { transform: translateX(0); }
-.method-tile:hover { color: var(--accent); transform: translateY(-3px); }
 .method-tile:hover::before { transform: translateY(0); }
+.method-tile:hover { color: var(--bg); }
 .method-tile .tile-head {
   display: flex; justify-content: space-between; align-items: flex-start;
   font-family: var(--font-mono);
@@ -2450,9 +2438,6 @@ function Hero({ animation = "wave" }) {
         </div>
       </div>
 
-      <div className="scroll-cue" aria-hidden="true">
-        <span>Keep scrolling</span>
-      </div>
     </section>
   );
 }
