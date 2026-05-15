@@ -591,11 +591,14 @@ section {
 /* ============================================================
    WORK / CASE STUDIES
    ============================================================ */
-.work-list { display: flex; flex-direction: column; }
+.work-list {
+  display: flex; flex-direction: column;
+  border-bottom: 1px solid var(--line);
+}
 .case {
   display: grid; grid-template-columns: 72px 1fr 1.3fr;
   gap: clamp(24px, 4vw, 48px);
-  padding: clamp(28px, 4vw, 44px) clamp(20px, 2vw, 32px) clamp(28px, 4vw, 44px) clamp(20px, 2vw, 32px);
+  padding: clamp(28px, 4vw, 44px) 0;
   border-top: 1px solid var(--line);
   position: relative; cursor: pointer;
   /* Subtle entrance — barely a blur, just a quiet "settling" feel that reads
@@ -631,7 +634,7 @@ section {
   transition: transform 520ms cubic-bezier(0.65, 0, 0.35, 1);
   z-index: 1;
 }
-.case:hover { background: transparent; padding-left: clamp(32px, 3.5vw, 56px); }
+.case:hover { background: transparent; }
 .case:hover::before { opacity: 1; }
 .case:hover::after { transform: scaleY(1); }
 .case:last-child { border-bottom: 1px solid var(--line); }
@@ -758,76 +761,6 @@ section {
    COLLAGE — two views: horizontal strip (default) + 3-column grid
    ============================================================ */
 /* View toggle — small segmented control in the section head */
-.collage-view-toggle {
-  display: inline-flex; gap: 0;
-  border: 1px solid var(--line);
-  padding: 3px;
-}
-.collage-view-toggle button {
-  width: 32px; height: 28px; display: grid; place-items: center;
-  color: var(--muted);
-  transition: background 220ms ease, color 220ms ease;
-}
-.collage-view-toggle button[aria-pressed="true"] {
-  background: var(--fg); color: var(--bg);
-}
-.collage-view-toggle button:not([aria-pressed="true"]):hover { color: var(--fg); }
-.collage-view-toggle svg { width: 14px; height: 14px; }
-
-/* --- Horizontal strip (larger card variant) --- */
-.collage-wrap { position: relative; margin: 0 calc(var(--pad-x) * -1); padding: 0 0 0 var(--pad-x); }
-.collage-wrap-strip { padding-bottom: 4px; }
-.collage-track {
-  display: flex; gap: clamp(24px, 3vw, 40px); padding-right: var(--pad-x);
-  overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;
-  -webkit-overflow-scrolling: touch; cursor: grab; user-select: none;
-  align-items: stretch;
-}
-.collage-track.dragging { cursor: grabbing; scroll-snap-type: none; }
-.collage-track::-webkit-scrollbar { display: none; }
-
-/* The 'large' strip variant: each card is poster-tall with a meta block
-   that breathes — name (bold), category line, and a one-line tagline below. */
-.collage-card-large {
-  width: clamp(380px, 38vw, 560px);
-  height: clamp(560px, 70vh, 720px);
-  flex: 0 0 auto;
-  scroll-snap-align: start;
-  display: grid;
-  grid-template-rows: 1fr auto;
-}
-.collage-card-large .thumb { min-height: 0; }
-.collage-card-large .meta-block {
-  padding: clamp(18px, 2vw, 24px);
-  display: flex; flex-direction: column; gap: 12px;
-  border-top: 1px solid var(--line);
-  background: var(--bg);
-}
-.collage-card-large .meta-block .meta-row {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
-  font-family: var(--font-mono);
-  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
-}
-.collage-card-large .meta-block .meta-row .name {
-  font-family: var(--font-sans);
-  font-size: clamp(15px, 1.3vw, 19px);
-  font-weight: 500; letter-spacing: -0.015em;
-  text-transform: none;
-}
-.collage-card-large .meta-block .meta-row .yr { color: var(--muted); }
-.collage-card-large .meta-block .tagline {
-  font-family: var(--font-sans);
-  font-size: clamp(13px, 1vw, 15px);
-  line-height: 1.5;
-  letter-spacing: -0.005em;
-  color: var(--muted);
-  margin: 0;
-  max-width: 38ch;
-}
-.collage-card-large .tagline em {
-  font-family: var(--font-display); font-style: italic;
-  color: var(--accent);
-}
 
 /* --- Brand marquee: 3 vertical auto-scrolling columns ---
    - Default view. Total height ~140vh, so the user moves past it in ~2 scrolls.
@@ -873,14 +806,19 @@ section {
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   cursor: grab;
-  /* hide scrollbar */
   scrollbar-width: none;
+  /* Bleed to section edges; first card aligns to the content grid */
+  margin-left: calc(var(--pad-x) * -1);
+  margin-right: calc(var(--pad-x) * -1);
+  padding-left: var(--pad-x);
+  padding-right: var(--pad-x);
+  padding-bottom: 4px;
 }
 .collage-strip::-webkit-scrollbar { display: none; }
 .collage-strip:active { cursor: grabbing; }
 .collage-strip .brand-card {
-  flex: 0 0 clamp(220px, 28vw, 340px) !important;
-  height: clamp(280px, 40vw, 440px) !important;
+  flex: 0 0 clamp(240px, 30vw, 360px) !important;
+  height: clamp(300px, 44vw, 480px) !important;
   aspect-ratio: unset !important;
   scroll-snap-align: start;
   opacity: 1 !important; transform: none !important;
@@ -1037,7 +975,7 @@ section {
   --line: rgba(15,10,7,0.2); --line-strong: rgba(15,10,7,0.5);
   --bg: var(--accent); transition: background 600ms ease, color 600ms ease;
 }
-.contact-section .section-head { border-top-color: rgba(15,10,7,0.55); }
+.contact-section .section-head { border-top: none; padding-top: 0; }
 .contact-section .section-head .num,
 .contact-section .section-head .meta { color: rgba(15,10,7,0.7); }
 /* Contact — restructured as a vertical narrative:
@@ -1840,12 +1778,6 @@ section:not(#hero).revealed .section-head {
     padding-top: 20px;
   }
   .section-head .meta { text-align: left; }
-
-  /* Strip cards: snap to viewport width on narrow screens */
-  .collage-card-large {
-    width: clamp(280px, 84vw, 420px);
-    height: clamp(440px, 80vh, 600px);
-  }
 
   /* Contact lead: smaller cap so 'attention.' fits, looser line so words
      don't collide when wrapping forces an extra line. */
