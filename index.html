@@ -780,10 +780,15 @@ section {
   position: relative;
   -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
           mask-image: linear-gradient(180deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
-  /* JS toggles .cols-1 at the 900px breakpoint — opacity crossfade plays
-     first so the grid-column snap is invisible at any viewport width */
+  /* JS toggles .cols-2 (560-900px) and .cols-1 (<560px) — opacity crossfade
+     plays first so the grid-column snap is invisible at any viewport width */
   transition: opacity 260ms ease, height 480ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
+.brand-marquee.cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+  height: clamp(640px, 130vh, 1200px);
+}
+.brand-marquee.cols-2 .brand-col.col-3 { display: none; }
 .brand-marquee.cols-1 {
   grid-template-columns: 1fr;
   height: clamp(560px, 120vh, 1000px);
@@ -3151,21 +3156,31 @@ function Collage() {
     return () => obs.disconnect();
   }, [view]);
 
-  // --- Grid view: responsive 3-col → 1-col with opacity crossfade ---
+  // --- Grid view: responsive 3-col → 2-col (tablet) → 1-col (phone)
+  //     with opacity crossfade between breakpoints so the column snap is invisible. ---
   useEffectCol(() => {
     if (view !== "grid") return;
     const el = gridRef.current;
     if (!el) return;
-    const mq = window.matchMedia("(max-width: 900px)");
-    const apply = (mobile, instant) => {
-      if (instant) { el.classList.toggle("cols-1", mobile); return; }
-      el.style.opacity = "0";
-      setTimeout(() => { el.classList.toggle("cols-1", mobile); requestAnimationFrame(() => { el.style.opacity = ""; }); }, 260);
+    const mqTablet = window.matchMedia("(max-width: 900px)");
+    const mqPhone  = window.matchMedia("(max-width: 560px)");
+    const setCols = () => {
+      el.classList.toggle("cols-1", mqPhone.matches);
+      el.classList.toggle("cols-2", mqTablet.matches && !mqPhone.matches);
     };
-    apply(mq.matches, true);
-    const handler = (e) => apply(e.matches, false);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
+    const apply = (instant) => {
+      if (instant) { setCols(); return; }
+      el.style.opacity = "0";
+      setTimeout(() => { setCols(); requestAnimationFrame(() => { el.style.opacity = ""; }); }, 260);
+    };
+    apply(true);
+    const handler = () => apply(false);
+    mqTablet.addEventListener("change", handler);
+    mqPhone.addEventListener("change", handler);
+    return () => {
+      mqTablet.removeEventListener("change", handler);
+      mqPhone.removeEventListener("change", handler);
+    };
   }, [view]);
 
   // --- Strip view: drag-to-scroll ---
