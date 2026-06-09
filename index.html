@@ -28,6 +28,54 @@
 /* ============================================================
    ADI UIXUX — Portfolio 2026
    Brutalist mono. High-contrast Swiss bones.
+   ============================================================
+
+   STYLESHEET INDEX (module-style sections within one file)
+   --------------------------------------------------------
+   01  TOKENS        — design system: colour, type, spacing
+   02  RESET / BASE  — html / body defaults, focus, ::selection
+   03  TYPE SCALE    — eyebrow / label / body utility classes
+   04  LAYOUT        — topnav, side rail, mobile menu, sections
+   05  COMPONENTS    — CTA, case rows, collage cards, contact tiles
+   06  ANIMATIONS    — keyframes + motion hierarchy (see below)
+   07  STATE / EGG   — easter eggs, grid reveal, accessibility
+   08  RESPONSIVE    — tablet + mobile breakpoints
+
+   ----------------------------------------------------------------
+   MOTION HIERARCHY (rules of engagement for animation)
+   ----------------------------------------------------------------
+   TIER 1 — GLOBAL (load-time + scroll-driven)
+     One-shot, sets the page rhythm.
+       loader → site entrance (enter-down / enter-up / enter-fade)
+       scroll progress bar (transform: scaleX driven by rAF)
+       section reveal observer (h2 letter mask-up)
+     Rule: must respect prefers-reduced-motion.
+
+   TIER 2 — INTERACTIVE (user-triggered, finite)
+     Reads as feedback. No idle motion.
+       hover hover-cascade-bold on hero words
+       magnetic CTA pull
+       grid-flash on click
+       wiggle (logo), period-ping, top-bob, hint-tick
+     Rule: hover transitions max 3 properties.
+
+   TIER 3 — DECORATIVE (idle, infinite, ambient)
+     Atmosphere. Easily over-used.
+       status-dot pulse (signals "live / open")
+       marquee-scroll (editorial strip between hero + work)
+       brand-vscroll (parallax columns, 3 instances = 1 conceptual motion)
+     Rule: ≤ 1 Tier-3 motion per visible component. Period.
+
+   Notes on enforcement (state at this commit):
+     ✓ Hero had blink + status-dot. Removed blink (clock counter
+       already carries the "I am live" signal).
+     ✓ scroll-cue deleted entirely (was orphan CSS — no JSX rendered it).
+     ✓ will-change reserved for continuously-animated elements only
+       (cursor / marquee track / brand columns). Removed from per-character
+       hover targets that were promoting N permanent compositor layers.
+     ✓ Scroll handlers in useScrollSpy / TopNav / SideRail / ScrollProgress
+       are rAF-throttled — multiple scroll events per frame collapse to one
+       callback (see /perf pass commit).
    ============================================================ */
 
 :root {
@@ -205,7 +253,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
     font-variation-settings 380ms cubic-bezier(0.2, 0.7, 0.2, 1),
     color 240ms ease;
   transition-delay: 0ms;
-  will-change: transform, font-variation-settings;
+  /* will-change removed: this rule applies to every letter of the logo on
+     every page. Browser's automatic compositing handles transition: transform
+     fine without the hint, and we avoid permanently promoting N layers. */
 }
 .logo:hover .logo-text .lt-ch {
   transform: translateY(-3px);
@@ -245,9 +295,13 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
   font-weight: 500; position: relative; color: inherit;
   border: 1px solid var(--line-strong); background: transparent;
-  transition: color 240ms ease, border-color 240ms ease, background 240ms ease,
+  /* CTA hover collapses to color/border/transform — three properties is the
+     ceiling per the motion hierarchy. (Was 4; the now-deferred background
+     change was redundant with border-color flipping at the same time.) */
+  transition: color 240ms ease, border-color 240ms ease,
               transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1);
-  will-change: transform;
+  /* will-change deferred — only one CTA on screen, browser optimises fine
+     for a single hover target. */
 }
 .cta .cta-inner {
   display: inline-flex; align-items: center; gap: 10px;
@@ -458,11 +512,9 @@ section {
   color: var(--muted-2); margin-bottom: clamp(28px, 4vw, 48px);
 }
 .hero-eyebrow .dash { width: 28px; height: 1px; background: currentColor; display: inline-block; }
-.hero-eyebrow .blink {
-  width: 8px; height: 14px; background: var(--accent);
-  animation: blink 1.1s steps(2) infinite;
-}
-@keyframes blink { 50% { opacity: 0; } }
+/* (removed: .blink — the live clock already carries the "I am live" signal,
+   the eyebrow doesn't need a separate blinking cursor competing for it.
+   Motion hierarchy rule: ≤ 1 Tier-3 infinite animation per component.) */
 
 /* Display headline — Inter, the "person voice".
    Weight 500 (not 450): Bringhurst's optical rule — light-on-dark always
@@ -511,12 +563,13 @@ section {
      as before, just shifted up so the contrast at rest is correct in dark mode. */
   font-weight: 500; font-variation-settings: "wght" 500;
   transition:
-    font-weight 320ms cubic-bezier(0.4, 0, 0.2, 1),
     font-variation-settings 320ms cubic-bezier(0.4, 0, 0.2, 1),
     letter-spacing 320ms cubic-bezier(0.4, 0, 0.2, 1),
     transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1);
   transition-delay: 0ms; /* reset on mouse-leave so unbold snaps uniformly */
-  will-change: font-variation-settings, transform;
+  /* will-change removed: applied per-character means dozens of permanent
+     compositor layers for an animation that only runs on hover of one word.
+     The transition itself triggers automatic compositing in modern browsers. */
 }
 .intro-text .word:hover .ch {
   font-weight: 720;
@@ -602,27 +655,6 @@ section {
   display: inline-block; width: 6px; height: 6px;
   background: var(--accent); border-radius: 50%;
   animation: pulse 2.4s infinite; vertical-align: middle; margin-right: 4px;
-}
-
-/* Scroll cue — centered under the hero footer, tells first-time visitors to
-   scroll. Flanked by thin horizontal rules. Hidden on coarse-pointer (touch)
-   devices since the gesture is already obvious there. */
-.scroll-cue {
-  position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%);
-  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em;
-  text-transform: uppercase; color: var(--muted);
-  display: flex; align-items: center; gap: 12px;
-  white-space: nowrap;
-  animation: scrollCueFade 2.4s ease-in-out infinite;
-}
-.scroll-cue::before, .scroll-cue::after {
-  content: ""; width: 28px; height: 1px; background: currentColor;
-}
-@keyframes scrollCueFade {
-  0%, 100% { opacity: 0.4; } 50% { opacity: 0.9; }
-}
-@media (hover: none), (pointer: coarse) {
-  .scroll-cue { display: none; }
 }
 
 /* ============================================================
@@ -1227,7 +1259,9 @@ section {
     font-variation-settings 700ms cubic-bezier(0.2, 0.7, 0.2, 1),
     color 360ms ease;
   transition-delay: 0ms;
-  will-change: transform, font-variation-settings;
+  /* will-change removed (per-letter × 8 letters = 8 permanent layers); the
+     wordmark only animates on hover and the auto-layer promotion when the
+     transition fires is sufficient. */
 }
 .wm-dot {
   display: inline-block;
@@ -1239,7 +1273,7 @@ section {
     transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1),
     background 320ms ease,
     border-radius 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
-  will-change: transform, background;
+  /* will-change deferred: single element, hover-only transient. */
 }
 /* Hover the wordmark — a "weight wave" rolls L→R: each letter pulses up to
    variable weight 800 and lifts a hair, in a 60ms stagger. The middle dot
@@ -1625,7 +1659,10 @@ body.grid-mode .grid-overlay { opacity: 1; }
   pointer-events: none;
   z-index: 9999;
   opacity: 0;
-  will-change: transform, width, height, background;
+  /* Only transform animates continuously (pointer follow). width/height/
+     background shift on hover-target change — let the transition trigger
+     auto-promotion for those, no permanent hint needed. */
+  will-change: transform;
 }
 .fcursor-ring {
   width: 32px; height: 32px; border-radius: 50%;
@@ -2756,7 +2793,6 @@ function Hero({ animation = "wave" }) {
       <div className="hero-eyebrow">
         <span className="dash"></span>
         <span>{clock.greeting} · Bangalore · <span className="clock-time">{clock.time}</span></span>
-        <span className="blink"></span>
       </div>
 
       <h1
