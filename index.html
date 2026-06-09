@@ -447,10 +447,15 @@ section {
   position: relative;
 }
 
+/* Eyebrow — the "system voice". Mono caps need extra weight to hold their own
+   next to the display headline; lifted from 400 → 500 + muted-2 (one tone deeper)
+   so the metadata reads as one register, not as faint as body text. */
 .hero-eyebrow {
   display: flex; gap: 16px; align-items: center;
-  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--muted); margin-bottom: clamp(28px, 4vw, 48px);
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted-2); margin-bottom: clamp(28px, 4vw, 48px);
 }
 .hero-eyebrow .dash { width: 28px; height: 1px; background: currentColor; display: inline-block; }
 .hero-eyebrow .blink {
@@ -459,13 +464,24 @@ section {
 }
 @keyframes blink { 50% { opacity: 0; } }
 
+/* Display headline — Inter, the "person voice".
+   Weight 500 (not 450): Bringhurst's optical rule — light-on-dark always
+   appears thinner than the same weight on light, so reversed display type
+   wants +1 weight step to read correctly. Tested in both light and dark;
+   500 holds in both, 450 went anemic in dark.
+   Tracking -0.024em (was -0.03em): aggressive negative tracking starts
+   cramping ascenders at this size — pulled back so letterforms breathe.
+   max-width 22ch: width tuned to the actual copy — 5 line breaks that read
+   as a paced statement, not a wall. CSS text-wrap: pretty hands the final
+   line-balancing to the browser. */
 .intro-text {
   font-family: var(--font-sans);
-  font-weight: 450;
+  font-weight: 500;
+  font-variation-settings: "wght" 500;
   font-size: clamp(30px, 4.8vw, 72px);
   line-height: 1.06;
-  letter-spacing: -0.03em;
-  max-width: 20ch;
+  letter-spacing: -0.024em;
+  max-width: 22ch;
   margin: 0;
   text-wrap: pretty;
   color: var(--fg);
@@ -486,12 +502,14 @@ section {
   content: attr(data-ghost);
   display: inline-block; width: 0;
   visibility: hidden; pointer-events: none;
-  font-weight: 700; font-variation-settings: "wght" 700;
-  letter-spacing: -0.04em; /* match hover tracking so reservation is exact */
+  font-weight: 720; font-variation-settings: "wght" 720;
+  letter-spacing: -0.034em; /* match hover tracking so reservation is exact */
 }
 .intro-text .ch {
   display: inline-block;
-  font-weight: 450; font-variation-settings: "wght" 450;
+  /* Inherits 500 from .intro-text base. Hover lifts to 720 — same +220 jump
+     as before, just shifted up so the contrast at rest is correct in dark mode. */
+  font-weight: 500; font-variation-settings: "wght" 500;
   transition:
     font-weight 320ms cubic-bezier(0.4, 0, 0.2, 1),
     font-variation-settings 320ms cubic-bezier(0.4, 0, 0.2, 1),
@@ -501,9 +519,9 @@ section {
   will-change: font-variation-settings, transform;
 }
 .intro-text .word:hover .ch {
-  font-weight: 700;
-  font-variation-settings: "wght" 700;
-  letter-spacing: -0.04em;
+  font-weight: 720;
+  font-variation-settings: "wght" 720;
+  letter-spacing: -0.034em;
   /* Left-to-right stagger — 28ms per character */
   transition-delay: calc(var(--ch-i, 0) * 28ms);
 }
@@ -516,7 +534,7 @@ section {
 }
 .intro-text .word.serif:hover .orig { opacity: 0; transform: translateY(-6px); }
 .intro-text .word.serif:hover .ch {
-  font-weight: 450; font-variation-settings: "wght" 450; letter-spacing: -0.03em;
+  font-weight: 500; font-variation-settings: "wght" 500; letter-spacing: -0.024em;
   transition-delay: 0ms;
 }
 .intro-text .word.serif .alt {
@@ -535,32 +553,49 @@ section {
   position: relative; top: -0.05em;
 }
 
+/* Sub — a 2-line tagline, not body copy.
+   Size bumped to 15-18px so it has presence below the 72px headline (>4:1
+   ratio is now ~4.5:1, comfortably inside the modular scale).
+   Line-height 1.5 (was 1.6) tightens the block — leading appropriate for a
+   3-line tagline rather than a paragraph of body. */
 .hero-sub {
   font-family: var(--font-sans); font-weight: 400;
-  font-size: clamp(14px, 1.05vw, 17px); line-height: 1.6;
-  letter-spacing: -0.005em; max-width: 56ch;
+  font-size: clamp(15px, 1.15vw, 18px); line-height: 1.5;
+  letter-spacing: -0.008em; max-width: 52ch;
   color: var(--muted); margin: clamp(28px, 4vw, 44px) 0 0;
 }
 .hero-sub em {
   font-family: var(--font-display); font-style: italic;
-  font-weight: 400; font-size: 1.12em;
+  font-weight: 400; font-size: 1.14em;
   color: var(--fg); letter-spacing: -0.01em;
 }
 
 /* Hero footer — meta strip grounded at the bottom of the hero.
-   The top border creates a clear figure/ground separation from the headline. */
+   Was 10/11 — a 1px step the eye couldn't read as hierarchy. Now 10/13 + a
+   weight step (500 → 600) + a colour step (muted → fg). Three reinforcing
+   cues for one hierarchy break = legible at a glance, never strident. */
 .hero-footer {
   margin-top: auto;
   padding-top: clamp(32px, 5vh, 56px);
   margin-top: clamp(48px, 8vh, 96px);
   border-top: 1px solid var(--line);
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+  font-family: var(--font-mono);
   font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
 }
 .hero-eyebrow .clock-time { color: var(--accent); font-variant-numeric: tabular-nums; }
-.hero-footer .col { display: flex; flex-direction: column; gap: 6px; }
-.hero-footer .col .k { color: var(--muted); font-size: 10px; letter-spacing: 0.14em; }
-.hero-footer .col .v { color: var(--fg); font-weight: 500; }
+.hero-footer .col { display: flex; flex-direction: column; gap: 8px; }
+.hero-footer .col .k {
+  color: var(--muted-2);
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.16em;
+}
+.hero-footer .col .v {
+  color: var(--fg);
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
 .hero-footer .col .v a { display: inline-flex; align-items: center; gap: 6px; }
 
 .status-dot {
