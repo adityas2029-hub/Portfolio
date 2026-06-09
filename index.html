@@ -1317,21 +1317,38 @@ section {
 @media (max-width: 900px), (hover: none), (pointer: coarse) {
   .bubble { display: none !important; }
 }
+/* Onboarding bubble — first-visit hints. Three placement variants:
+   from-top       (arrow on top-left,  bubble sits below + right of target)
+   from-top-right (arrow on top-right, bubble sits below + left  of target)
+   from-left      (arrow on left edge, bubble sits to the right of target)
+   Width fixed to 240px so JS placement can clamp against viewport accurately. */
 .bubble {
-  position: fixed; background: var(--bubble-bg); color: var(--bubble-fg);
-  padding: 10px 14px; font-size: 11px; letter-spacing: 0.04em; z-index: 200;
-  max-width: 240px; line-height: 1.4; cursor: pointer; opacity: 0;
-  transform: translateY(6px); transition: opacity 380ms ease, transform 380ms ease;
-  pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  position: fixed;
+  background: var(--bubble-bg); color: var(--bubble-fg);
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.04em; line-height: 1.45;
+  z-index: 200;
+  cursor: pointer;
+  opacity: 0; transform: translateY(6px);
+  transition: opacity 380ms ease, transform 380ms ease;
+  pointer-events: none;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.22);
+  border: 1px solid color-mix(in oklab, var(--bubble-bg) 80%, var(--accent) 20%);
 }
 .bubble.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
-.bubble .close { display: inline-block; margin-left: 8px; opacity: 0.6; }
+.bubble .close { display: inline-block; margin-left: 8px; opacity: 0.55; font-weight: 600; }
+.bubble:hover .close { opacity: 1; color: var(--accent); }
 .bubble::before {
   content: ""; position: absolute; width: 10px; height: 10px;
-  background: var(--bubble-bg); transform: rotate(45deg);
+  background: var(--bubble-bg);
+  border-top: 1px solid color-mix(in oklab, var(--bubble-bg) 80%, var(--accent) 20%);
+  border-left: 1px solid color-mix(in oklab, var(--bubble-bg) 80%, var(--accent) 20%);
+  transform: rotate(45deg);
 }
-.bubble.from-top::before { top: -4px; left: 18px; }
-.bubble.from-left::before { left: -4px; top: 18px; }
+.bubble.from-top::before        { top: -6px; left: 18px;  }
+.bubble.from-top-right::before  { top: -6px; right: 18px; transform: rotate(45deg); }
+.bubble.from-left::before       { left: -6px; top: 18px; transform: rotate(-45deg); }
 
 /* ============================================================
    SCROLL PROGRESS BAR — hairline that fills as you scroll
@@ -2525,6 +2542,7 @@ function A11yPanel() {
         aria-expanded={String(open)}
         aria-controls="a11y-panel"
         title="Accessibility"
+        data-onboard="a11y"
         onClick={() => setOpen(v => !v)}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="square" aria-hidden="true">
@@ -3685,12 +3703,61 @@ Object.assign(window, { Contact, Footer });
 <script type="text/babel">
 const { useEffect: useEffectOb, useState: useStateOb } = React;
 
+/* Three first-visit hints. Targets, placement preference, and copy.
+   Placement is a hint ('right', 'below-right', 'below-left'); the actual
+   pixel position is computed against the target rect and clamped inside the
+   viewport so a bubble never drifts off-screen on narrow displays. */
 const BUBBLES = [
-  { sel: '[data-onboard="rail"]',  text: "Quick travel — every section is one click.", place: "right",  offset: [80, -10] },
-  { sel: '[data-onboard="theme"]', text: "Auto-flips at 7pm. Tap to override.",          place: "bottom", offset: [-180, 44] },
-  { sel: '[data-onboard="cta"]',   text: "Bypass the scroll — say hello right away.",   place: "bottom", offset: [-160, 44] },
-  { sel: ".intro-text",            text: "Hover the words. Some swap, some shift.",      place: "bottom", offset: [0, 24] },
+  {
+    sel: '[data-onboard="rail"]',
+    text: "Quick travel — every section is one click away.",
+    place: "right",
+  },
+  {
+    sel: '[data-onboard="theme"]',
+    text: "Boots dark every refresh. Click to flip to light for this session.",
+    place: "below-right",  // anchor under target's right edge → bubble grows leftward
+  },
+  {
+    sel: '[data-onboard="a11y"]',
+    text: "Type size, colour-vision modes, reduced motion — all here.",
+    place: "below-right",
+  },
 ];
+
+const BUBBLE_W   = 240;   // max-width matches CSS
+const VP_PAD     = 12;    // keep bubbles at least this far from any edge
+const ARROW_OFF  = 14;    // distance from target
+
+/* Position a bubble against its target. Returns { x, y, side } where 'side'
+   tells the CSS where the arrow should sprout from. */
+function placeBubble(target, place) {
+  const r = target.getBoundingClientRect();
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let x, y, side;
+
+  if (place === "right") {
+    // Sit to the right of target, vertically centred against it
+    x = r.right + ARROW_OFF;
+    y = r.top  + r.height / 2 - 18;
+    side = "from-left";
+  } else if (place === "below-left") {
+    // Anchor under target's LEFT edge, growing rightward
+    x = r.left;
+    y = r.bottom + ARROW_OFF;
+    side = "from-top";
+  } else {
+    // 'below-right' — anchor under target's RIGHT edge, growing leftward
+    x = r.right - BUBBLE_W;
+    y = r.bottom + ARROW_OFF;
+    side = "from-top-right";
+  }
+
+  // Clamp inside viewport — never let a bubble's box-shadow leak past the edge
+  x = Math.max(VP_PAD, Math.min(vw - BUBBLE_W - VP_PAD, x));
+  y = Math.max(VP_PAD, Math.min(vh - 80 - VP_PAD, y));
+  return { x, y, side };
+}
 
 function OnboardingBubbles({ enabled, replayKey }) {
   const [coords, setCoords] = useStateOb([]);
@@ -3698,36 +3765,47 @@ function OnboardingBubbles({ enabled, replayKey }) {
 
   useEffectOb(() => {
     if (!enabled) return;
-    if (localStorage.getItem("adi-onboarded") === "1" && replayKey === 0) return;
-
     let mounted = true;
-    let timeouts = [];
+    const timeouts = [];
 
     const compute = () => {
       const cs = BUBBLES.map((b) => {
         const el = document.querySelector(b.sel);
         if (!el) return null;
-        const r = el.getBoundingClientRect();
-        return { ...b, x: r.left + (b.offset[0] || 0), y: r.top + r.height + (b.offset[1] || 0) };
+        const p = placeBubble(el, b.place);
+        return { ...b, ...p };
       });
       if (mounted) setCoords(cs);
     };
     compute();
     window.addEventListener("resize", compute);
 
+    /* Show bubbles one at a time so each gets full attention.
+       Each is visible for SHOW_FOR ms, then waits GAP ms before the next.
+       The two top-nav targets (theme + a11y) sit close enough that any
+       overlap in visibility would pile both bubbles on top of each other —
+       sequential reveal sidesteps that without needing manual positions. */
+    const FIRST_DELAY = 700;     // small breath after loader exits
+    const SHOW_FOR    = 3400;    // dwell time per bubble
+    const GAP         = 320;     // crossfade gap
     BUBBLES.forEach((_, i) => {
+      const showAt = FIRST_DELAY + i * (SHOW_FOR + GAP);
+      const hideAt = showAt + SHOW_FOR;
       timeouts.push(setTimeout(() => {
         if (!mounted) return;
         setCoords((curr) => curr.map((c, j) => (j === i ? { ...c, _show: true } : c)));
-      }, 600 + i * 420));
+      }, showAt));
       timeouts.push(setTimeout(() => {
         if (!mounted) return;
         setCoords((curr) => curr.map((c, j) => (j === i ? { ...c, _show: false } : c)));
-      }, 7200 + i * 420));
+      }, hideAt));
     });
 
-    const finalize = setTimeout(() => localStorage.setItem("adi-onboarded", "1"), 12000);
-    return () => { mounted = false; timeouts.forEach(clearTimeout); clearTimeout(finalize); window.removeEventListener("resize", compute); };
+    return () => {
+      mounted = false;
+      timeouts.forEach(clearTimeout);
+      window.removeEventListener("resize", compute);
+    };
   }, [enabled, replayKey]);
 
   if (!enabled) return null;
@@ -3736,11 +3814,14 @@ function OnboardingBubbles({ enabled, replayKey }) {
       {coords.map((c, i) => {
         if (!c || dismissed.has(i)) return null;
         return (
-          <div key={i} className={`bubble from-top ${c._show ? "show" : ""}`}
-               style={{ left: Math.max(8, c.x), top: c.y }}
-               onClick={() => setDismissed((s) => new Set(s).add(i))}>
+          <div
+            key={i}
+            className={`bubble ${c.side} ${c._show ? "show" : ""}`}
+            style={{ left: c.x, top: c.y, width: BUBBLE_W }}
+            onClick={() => setDismissed((s) => new Set(s).add(i))}
+          >
             {c.text}
-            <span className="close">· ✕</span>
+            <span className="close">·  ✕</span>
           </div>
         );
       })}
@@ -3826,7 +3907,10 @@ const NAV_ITEMS = [
 const DEFAULTS = {
   heroAnimation: "wave",
   themeMode: "auto",
-  showOnboarding: false,
+  /* On by default — every refresh starts dark + defaults (boot script wipes
+     localStorage), so the first-visit hints show every reload. They auto-fade
+     after ~7s and a click dismisses sooner. */
+  showOnboarding: true,
 };
 
 /* Floating cursor — a small ring + dot that follows the pointer with subtle
