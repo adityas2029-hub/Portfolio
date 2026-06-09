@@ -5,21 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>ADI UIXUX — product, systems, experience.</title>
 <meta name="description" content="Adi — product, systems and experience designer. Bangalore." />
-<!-- Apply saved theme before first paint so loader + page always match -->
+<!-- Every page load starts in dark mode with default a11y settings.
+     User-made changes apply for the session only — localStorage is wiped
+     on each load so the next refresh begins fresh. -->
 <script>
 (function(){
-  var stored = localStorage.getItem("adi-theme");
-  var mode   = localStorage.getItem("adi-theme-mode") || "auto";
-  var theme  = stored === "light" || stored === "dark" ? stored
-             : mode === "dark" ? "dark"
-             : mode === "light" ? "light"
-             : window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  document.documentElement.setAttribute("data-theme", theme);
-
-  /* Restore a11y colour and motion settings before first paint */
-  var a11yColor = localStorage.getItem("adi-a11y-color");
-  if (a11yColor && a11yColor !== "default") document.documentElement.setAttribute("data-color-mode", a11yColor);
-  if (localStorage.getItem("adi-a11y-motion") === "1") document.documentElement.classList.add("reduce-motion");
+  try {
+    ["adi-theme","adi-theme-mode","adi-a11y-color","adi-a11y-motion","adi-a11y-size","adi-onboarded"]
+      .forEach(function(k){ localStorage.removeItem(k); });
+  } catch(_) {}
+  document.documentElement.setAttribute("data-theme", "dark");
+  document.documentElement.removeAttribute("data-color-mode");
+  document.documentElement.classList.remove("reduce-motion");
 })();
 </script>
 
@@ -1606,8 +1603,11 @@ body.grid-mode .grid-overlay { opacity: 1; }
     border-color 220ms ease,
     background 220ms ease,
     opacity 220ms ease;
-  mix-blend-mode: difference; /* keeps the ring readable over any bg */
-  border-color: rgba(255,255,255,0.85);
+  /* mix-blend-mode: difference was the prettiest readout but it forces a
+     full-viewport recomposite every animation frame — measurable cursor lag
+     on mid-range laptops. We get the same legibility by using the current
+     theme's fg colour directly (already inverted in dark mode). */
+  border-color: var(--fg);
 }
 .fcursor-dot {
   width: 5px; height: 5px; border-radius: 50%;
@@ -2248,33 +2248,27 @@ Object.assign(window, { useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakT
 <script type="text/babel">
 const { useEffect, useState, useRef, useCallback } = React;
 
+/* Theme hook. Every page load starts dark; user can toggle within the session,
+   but nothing persists (localStorage is cleared by the boot script above). */
 function useTheme(forceMode) {
-  function autoTheme() {
-    const h = new Date().getHours();
-    return h >= 19 || h < 6 ? "dark" : "light";
-  }
-
-  const [theme, setTheme] = useState(() => {
-    const stored = localStorage.getItem("adi-theme");
-    if (stored === "light" || stored === "dark") return stored;
-    return autoTheme();
-  });
-  const [mode, setMode] = useState(() => localStorage.getItem("adi-theme-mode") || "auto");
+  const [theme, setTheme] = useState("dark");
+  const [mode, setMode]   = useState("dark");
 
   useEffect(() => {
-    if (forceMode && forceMode !== "auto") { setTheme(forceMode); setMode(forceMode); return; }
-    if (mode === "auto") setTheme(autoTheme());
-    else setTheme(mode);
-  }, [mode, forceMode]);
+    if (forceMode === "light" || forceMode === "dark") {
+      setTheme(forceMode);
+      setMode(forceMode);
+    }
+  }, [forceMode]);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("adi-theme", theme);
-    localStorage.setItem("adi-theme-mode", mode);
-  }, [theme, mode]);
+  }, [theme]);
 
   const cycle = useCallback(() => {
-    setMode((m) => (m === "auto" ? "light" : m === "light" ? "dark" : "auto"));
+    // Session-only toggle — dark ⇄ light
+    setMode((m) => (m === "dark" ? "light" : "dark"));
+    setTheme((t) => (t === "dark" ? "light" : "dark"));
   }, []);
 
   return { theme, mode, setMode, cycle };
@@ -2283,7 +2277,13 @@ function useTheme(forceMode) {
 function useScrollSpy(ids) {
   const [active, setActive] = useState(ids[0]);
   useEffect(() => {
-    const handler = () => {
+    /* Collapse N scroll events per frame into a single rAF callback. The work
+       below reads layout (offsetTop) which can force reflows; doing it once
+       per frame instead of once per event takes a measurable bite out of
+       scroll latency on long pages. */
+    let scheduled = false;
+    const work = () => {
+      scheduled = false;
       const y = window.scrollY + window.innerHeight * 0.35;
       let found = ids[0];
       for (const id of ids) {
@@ -2293,7 +2293,12 @@ function useScrollSpy(ids) {
       }
       setActive(found);
     };
-    handler();
+    const handler = () => {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(work);
+    };
+    work();
     window.addEventListener("scroll", handler, { passive: true });
     window.addEventListener("resize", handler);
     return () => { window.removeEventListener("scroll", handler); window.removeEventListener("resize", handler); };
@@ -2336,9 +2341,10 @@ const A11Y_MIN = 80, A11Y_MAX = 160, A11Y_STEP = 10;
 
 function A11yPanel() {
   const [open,   setOpen]   = useStateNav(false);
-  const [size,   setSize]   = useStateNav(() => { const v = parseInt(localStorage.getItem("adi-a11y-size") || "100"); return isNaN(v) ? 100 : v; });
-  const [color,  setColor]  = useStateNav(() => localStorage.getItem("adi-a11y-color") || "default");
-  const [motion, setMotion] = useStateNav(() => localStorage.getItem("adi-a11y-motion") === "1");
+  /* A11y prefs are session-only — every refresh starts at defaults. */
+  const [size,   setSize]   = useStateNav(100);
+  const [color,  setColor]  = useStateNav("default");
+  const [motion, setMotion] = useStateNav(false);
   const [panelStyle, setPanelStyle] = useStateNav({});
 
   const triggerRef = useRefNav(null);
@@ -2349,19 +2355,15 @@ function A11yPanel() {
     const root = document.getElementById("root");
     if (!root) return;
     root.style.zoom = size === 100 ? "" : (size / 100).toFixed(3);
-    if (size === 100) localStorage.removeItem("adi-a11y-size");
-    else localStorage.setItem("adi-a11y-size", String(size));
   }, [size]);
 
   useEffectNav(() => {
-    if (color === "default") { document.documentElement.removeAttribute("data-color-mode"); localStorage.removeItem("adi-a11y-color"); }
-    else { document.documentElement.setAttribute("data-color-mode", color); localStorage.setItem("adi-a11y-color", color); }
+    if (color === "default") document.documentElement.removeAttribute("data-color-mode");
+    else document.documentElement.setAttribute("data-color-mode", color);
   }, [color]);
 
   useEffectNav(() => {
     document.documentElement.classList.toggle("reduce-motion", motion);
-    if (motion) localStorage.setItem("adi-a11y-motion", "1");
-    else localStorage.removeItem("adi-a11y-motion");
   }, [motion]);
 
   /* Position panel below trigger button (desktop only — mobile uses CSS) */
@@ -2510,7 +2512,11 @@ function TopNav({ onToggleTheme, themeMode, onCta }) {
   const [onAccent, setOnAccent] = useStateNav(false);
   const ctaRef = useMagnetic(0.25, 6);
   useEffectNav(() => {
-    const handler = () => {
+    /* rAF-throttled: getBoundingClientRect() forces layout; capping at once
+       per frame keeps scroll smooth. */
+    let scheduled = false;
+    const work = () => {
+      scheduled = false;
       setScrolledNav(window.scrollY > 24);
       const c = document.getElementById("contact");
       if (c) {
@@ -2518,7 +2524,8 @@ function TopNav({ onToggleTheme, themeMode, onCta }) {
         setOnAccent(r.top < 60 && r.bottom > 60);
       }
     };
-    handler();
+    const handler = () => { if (!scheduled) { scheduled = true; requestAnimationFrame(work); } };
+    work();
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
   }, []);
@@ -2587,13 +2594,16 @@ function ThemeIcon({ mode }) {
 function SideRail({ items, active, onJump }) {
   const [onAccentR, setOnAccentR] = useStateNav(false);
   useEffectNav(() => {
-    const handler = () => {
+    let scheduled = false;
+    const work = () => {
+      scheduled = false;
       const c = document.getElementById("contact");
       if (!c) return;
       const r = c.getBoundingClientRect();
       setOnAccentR(r.top < window.innerHeight / 2 && r.bottom > window.innerHeight / 2);
     };
-    handler();
+    const handler = () => { if (!scheduled) { scheduled = true; requestAnimationFrame(work); } };
+    work();
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
   }, []);
@@ -3792,12 +3802,15 @@ function KonamiEgg() {
 function ScrollProgress() {
   const barRef = useRef(null);
   useEffect(() => {
-    const onScroll = () => {
+    let scheduled = false;
+    const work = () => {
+      scheduled = false;
       const max = document.documentElement.scrollHeight - window.innerHeight;
       const p = max > 0 ? window.scrollY / max : 0;
       if (barRef.current) barRef.current.style.transform = `scaleX(${p})`;
     };
-    onScroll();
+    const onScroll = () => { if (!scheduled) { scheduled = true; requestAnimationFrame(work); } };
+    work();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => {
@@ -3941,35 +3954,35 @@ function FloatingCursor() {
       dot.setAttribute("data-kind", next);
     };
 
+    /* Pre-compiled selector strings — passed once to matches(), no string
+       concatenation on every move. */
+    const SEL_TEXT = "textarea, input[type='text'], input[type='email'], input[type='tel'], input[type='search'], [contenteditable='true']";
+    const SEL_LINK = "a, button, [role='button'], .case, .collage-card, .rail-item, .hamburger, .theme-toggle, .cta, .topnav-center a, .submit, .method-tile, summary, label, [data-cursor='link'], .a11y-trigger";
+
     const inferKind = (el) => {
       if (!el) return "default";
-      // Walk up the tree to find an interactive ancestor
-      let n = el;
-      while (n && n !== document.body) {
-        if (n.matches?.("textarea, input[type='text'], input[type='email'], input[type='tel'], input[type='search'], [contenteditable='true']"))
-          return "text";
-        // The contact section has its own orange bg — accent treatment fits there
-        if (n.matches?.(".contact-section, .contact-section *")) {
-          if (n.matches?.("a, button, [role='button'], .method-tile, .submit, .case, .collage-card, .topnav-center a"))
-            return "accent-link";
-          return "accent";
-        }
-        if (n.matches?.("a, button, [role='button'], .case, .collage-card, .rail-item, .hamburger, .theme-toggle, .cta, .topnav-center a, .submit, .method-tile, summary, label, [data-cursor='link']"))
-          return "link";
-        n = n.parentElement;
-      }
-      return "default";
+      // closest() does the same ancestor walk in C++ — way cheaper than the
+      // hand-rolled loop with multiple matches() calls per node we had before.
+      if (el.closest(SEL_TEXT)) return "text";
+      const onAccent = el.closest(".contact-section");
+      const linkAnc  = el.closest(SEL_LINK);
+      if (onAccent) return linkAnc ? "accent-link" : "accent";
+      return linkAnc ? "link" : "default";
     };
 
+    /* mousemove only updates the target coord (cheap). The kind inference and
+       attribute writes happen on the rAF tick — at most once per frame, never
+       in the middle of the browser's input-event processing. This was the
+       biggest single source of cursor lag. */
     const onMove = (e) => {
       state.current.tx = e.clientX;
       state.current.ty = e.clientY;
+      state.current.target = e.target;
       if (!state.current.visible) {
         state.current.visible = true;
         ring.style.opacity = "1";
         dot.style.opacity = "1";
       }
-      setKind(inferKind(e.target));
     };
     const onLeave = () => {
       state.current.visible = false;
@@ -3979,15 +3992,23 @@ function FloatingCursor() {
     const onDown = () => ring.setAttribute("data-pressed", "true");
     const onUp = () => ring.removeAttribute("data-pressed");
 
-    const tick = () => {
+    /* Throttle kind inference — it walks the DOM via closest() and triggers
+       attribute swaps. Doing it every frame on a 144Hz screen is wasteful;
+       100ms is invisible to the eye. */
+    let lastKindAt = 0;
+
+    const tick = (now) => {
       const s = state.current;
-      // Two lerp speeds — the dot tracks fast, the ring trails behind for organic feel
-      s.x += (s.tx - s.x) * 0.22;
-      s.y += (s.ty - s.y) * 0.22;
-      const ringX = s.x + (s.tx - s.x) * 0.0; // ring uses the integrated value above
-      const ringY = s.y + (s.ty - s.y) * 0.0;
-      ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%)`;
-      dot.style.transform = `translate3d(${s.tx}px, ${s.ty}px, 0) translate(-50%, -50%)`;
+      // Single lerp — the dot tracks the cursor exactly, the ring trails
+      // via the smoothed value. Cheap pointer follower.
+      s.x += (s.tx - s.x) * 0.28;
+      s.y += (s.ty - s.y) * 0.28;
+      ring.style.transform = `translate3d(${s.x}px, ${s.y}px, 0) translate(-50%, -50%)`;
+      dot.style.transform  = `translate3d(${s.tx}px, ${s.ty}px, 0) translate(-50%, -50%)`;
+      if (s.target && now - lastKindAt > 100) {
+        lastKindAt = now;
+        setKind(inferKind(s.target));
+      }
       s.raf = requestAnimationFrame(tick);
     };
     state.current.raf = requestAnimationFrame(tick);
