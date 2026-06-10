@@ -2455,17 +2455,6 @@ function A11yPanel() {
     document.documentElement.classList.toggle("reduce-motion", motion);
   }, [motion]);
 
-  /* Position panel below trigger button (desktop only — mobile uses CSS) */
-  useEffectNav(() => {
-    if (!open || !triggerRef.current) return;
-    if (window.innerWidth <= 600) { setPanelStyle({}); return; }
-    const rect = triggerRef.current.getBoundingClientRect();
-    setPanelStyle({
-      top:   Math.round(rect.bottom + 10) + "px",
-      right: Math.round(window.innerWidth - rect.right) + "px",
-    });
-  }, [open]);
-
   /* Close on outside click */
   useEffectNav(() => {
     if (!open) return;
@@ -2480,6 +2469,23 @@ function A11yPanel() {
   }, [open]);
 
   const reset = useCallbackNav(() => { setSize(100); setColor("default"); setMotion(false); }, []);
+
+  /* Synchronous toggle: position is calculated in the same event-handler tick as opening,
+     so React batches both state updates into one render — no post-paint jump on desktop */
+  const handleToggle = () => {
+    if (!open && triggerRef.current) {
+      if (window.innerWidth > 600) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        setPanelStyle({
+          top:   Math.round(rect.bottom + 10) + "px",
+          right: Math.round(window.innerWidth - rect.right) + "px",
+        });
+      } else {
+        setPanelStyle({});
+      }
+    }
+    setOpen(v => !v);
+  };
 
   const panelNode = (
     <div ref={panelRef} id="a11y-panel"
@@ -2543,7 +2549,7 @@ function A11yPanel() {
         aria-controls="a11y-panel"
         title="Accessibility"
         data-onboard="a11y"
-        onClick={() => setOpen(v => !v)}
+        onClick={handleToggle}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="square" aria-hidden="true">
           <circle cx="12" cy="4.5" r="1.8" fill="currentColor" stroke="none"/>
