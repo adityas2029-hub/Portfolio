@@ -3401,7 +3401,10 @@ function Collage() {
   );
 }
 
-Object.assign(window, { Collage });
+/* CaseMockup is consumed by the Work block (case-study covers) — must be on
+   window so the cross-block reference survives per-block scoping in the
+   production build. */
+Object.assign(window, { Collage, CaseMockup });
 </script>
 
 <!-- ── About ─────────────────────────────────────────────────── -->
@@ -3888,6 +3891,12 @@ Object.assign(window, { OnboardingBubbles });
 <!-- ── App (root) ─────────────────────────────────────────────── -->
 <script type="text/babel">
 const { useState: useStateApp, useEffect: useEffectApp, useCallback: useCallbackApp } = React;
+/* Bare hooks too — ScrollProgress / FloatingCursor / GridReveal / ScrollTop /
+   KonamiEgg below use the unaliased names. Under babel-standalone these leaked
+   in from the Hooks block (const → var transpilation makes every top-level
+   name a shared global); the production build scopes each block in an IIFE,
+   so this block must declare its own. */
+const { useState, useEffect, useRef, useCallback } = React;
 
 /* Pull components from window into local vars so JSX can use them */
 const _TopNav          = window.TopNav;

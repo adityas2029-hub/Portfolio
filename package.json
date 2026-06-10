@@ -1,0 +1,13 @@
+{
+  "name": "adiuiux-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ADI UIXUX — portfolio. Source lives in index.html (single file, in-browser JSX for easy editing); `npm run build` emits dist/index.html (precompiled, production React inlined, zero CDN).",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}
